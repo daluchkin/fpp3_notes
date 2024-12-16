@@ -1,0 +1,32 @@
+bookdown::gitbook:
+  css: style.css
+  config:
+    toc:
+      before: |
+        <li><a href="https://otexts.com/fpp3/">Forecasting: Principles and Practice (3rd ed)</a></li>
+      after: |
+        <li><a href="https://github.com/daluchkin?tab=repositories">All Repositories</a></li>
+    toolbar:
+      position: fixed
+    edit : null
+    download: null
+    search:
+      engine: lunr # or fuse
+      # options to control/tune search engine behavior (for
+      # fuse.js, refer to https://fusejs.io/api/options.html)
+      options: null
+    fontsettings:
+      theme: white
+      family: sans
+      size: 2
+    sharing:
+      facebook: false
+      github: false
+      twitter: false
+      linkedin: false
+      weibo: false
+      instapaper: false
+      vk: false
+      whatsapp: false
+      all: false
+    info: false

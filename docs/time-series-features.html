@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 4 Time series features | Forecasting: Principles and Practice (3rd ed)</title>
+  <meta name="description" content="Chapter 4 Time series features | Forecasting: Principles and Practice (3rd ed)" />
+  <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 4 Time series features | Forecasting: Principles and Practice (3rd ed)" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta name="github-repo" content="https://github.com/daluchkin/fpp3_notes" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 4 Time series features | Forecasting: Principles and Practice (3rd ed)" />
+  
+  
+  
+
+<meta name="author" content="Dmitry Luchkin" />
+
+
+<meta name="date" content="2024-12-16" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="time-series-decomposition.html"/>
+<link rel="next" href="the-forecasters-toolbox.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="https://otexts.com/fpp3/">Forecasting: Principles and Practice (3rd ed)</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="getting-started.html"><a href="getting-started.html"><i class="fa fa-check"></i><b>1</b> Getting started</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="getting-started.html"><a href="getting-started.html#what-can-be-forecast"><i class="fa fa-check"></i><b>1.1</b> What can be forecast?</a></li>
+<li class="chapter" data-level="1.2" data-path="getting-started.html"><a href="getting-started.html#forecasting-goals-and-planning"><i class="fa fa-check"></i><b>1.2</b> Forecasting, goals and planning</a></li>
+<li class="chapter" data-level="1.3" data-path="getting-started.html"><a href="getting-started.html#determining-what-to-forecast"><i class="fa fa-check"></i><b>1.3</b> Determining what to forecast</a></li>
+<li class="chapter" data-level="1.4" data-path="getting-started.html"><a href="getting-started.html#forecasting-data-and-methods"><i class="fa fa-check"></i><b>1.4</b> Forecasting data and methods</a></li>
+<li class="chapter" data-level="1.5" data-path="getting-started.html"><a href="getting-started.html#some-case-studies"><i class="fa fa-check"></i><b>1.5</b> Some case studies</a></li>
+<li class="chapter" data-level="1.6" data-path="getting-started.html"><a href="getting-started.html#the-basic-steps-in-a-forecasting-task"><i class="fa fa-check"></i><b>1.6</b> The basic steps in a forecasting task</a>
+<ul>
+<li class="chapter" data-level="1.6.1" data-path="getting-started.html"><a href="getting-started.html#summary-five-basic-steps-of-forecasting"><i class="fa fa-check"></i><b>1.6.1</b> Summary: Five Basic Steps of Forecasting</a></li>
+<li class="chapter" data-level="1.6.2" data-path="getting-started.html"><a href="getting-started.html#summary-five-basic-steps-of-forecasting-1"><i class="fa fa-check"></i><b>1.6.2</b> Summary: Five Basic Steps of Forecasting</a></li>
+</ul></li>
+<li class="chapter" data-level="1.7" data-path="getting-started.html"><a href="getting-started.html#the-statistical-forecasting-perspective"><i class="fa fa-check"></i><b>1.7</b> The statistical forecasting perspective</a></li>
+<li class="chapter" data-level="1.8" data-path="getting-started.html"><a href="getting-started.html#excercises"><i class="fa fa-check"></i><b>1.8</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="time-series-graphics.html"><a href="time-series-graphics.html"><i class="fa fa-check"></i><b>2</b> Time series graphics</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#tsibble-object"><i class="fa fa-check"></i><b>2.1</b> <code>tsibble</code> object</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-index-variable"><i class="fa fa-check"></i><b>2.1.1</b> The index variable</a></li>
+<li class="chapter" data-level="2.1.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-key-variable"><i class="fa fa-check"></i><b>2.1.2</b> The key variable</a></li>
+<li class="chapter" data-level="2.1.3" data-path="time-series-graphics.html"><a href="time-series-graphics.html#working-with-tsibble-object"><i class="fa fa-check"></i><b>2.1.3</b> Working with <code>tsibble</code> object</a></li>
+<li class="chapter" data-level="2.1.4" data-path="time-series-graphics.html"><a href="time-series-graphics.html#read-a-csv-file-and-convert-to-a-tsibble"><i class="fa fa-check"></i><b>2.1.4</b> Read a csv file and convert to a tsibble</a></li>
+<li class="chapter" data-level="2.1.5" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-seasonal-period"><i class="fa fa-check"></i><b>2.1.5</b> The seasonal period</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#time-plot"><i class="fa fa-check"></i><b>2.2</b> Time plot</a></li>
+<li class="chapter" data-level="2.3" data-path="time-series-graphics.html"><a href="time-series-graphics.html#time-series-patterns"><i class="fa fa-check"></i><b>2.3</b> Time series patterns</a></li>
+<li class="chapter" data-level="2.4" data-path="time-series-graphics.html"><a href="time-series-graphics.html#seasonal-plots"><i class="fa fa-check"></i><b>2.4</b> Seasonal plots</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#multiple-seasonal-periods"><i class="fa fa-check"></i><b>2.4.1</b> Multiple seasonal periods</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="time-series-graphics.html"><a href="time-series-graphics.html#seasonal-subseries-plots"><i class="fa fa-check"></i><b>2.5</b> Seasonal subseries plots</a>
+<ul>
+<li class="chapter" data-level="2.5.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#example-australian-holiday-tourism"><i class="fa fa-check"></i><b>2.5.1</b> Example: Australian holiday tourism</a></li>
+</ul></li>
+<li class="chapter" data-level="2.6" data-path="time-series-graphics.html"><a href="time-series-graphics.html#scatterplots"><i class="fa fa-check"></i><b>2.6</b> Scatterplots</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#correlation"><i class="fa fa-check"></i><b>2.6.1</b> Correlation</a></li>
+<li class="chapter" data-level="2.6.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#scatterplot-matrices"><i class="fa fa-check"></i><b>2.6.2</b> Scatterplot matrices</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="time-series-graphics.html"><a href="time-series-graphics.html#lag-plots"><i class="fa fa-check"></i><b>2.7</b> Lag plots</a></li>
+<li class="chapter" data-level="2.8" data-path="time-series-graphics.html"><a href="time-series-graphics.html#autocorrelation"><i class="fa fa-check"></i><b>2.8</b> Autocorrelation</a>
+<ul>
+<li class="chapter" data-level="2.8.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#trend-and-seasonality-in-acf-plots"><i class="fa fa-check"></i><b>2.8.1</b> Trend and seasonality in ACF plots</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="time-series-graphics.html"><a href="time-series-graphics.html#white-moise"><i class="fa fa-check"></i><b>2.9</b> White moise</a></li>
+<li class="chapter" data-level="2.10" data-path="time-series-graphics.html"><a href="time-series-graphics.html#excercises-1"><i class="fa fa-check"></i><b>2.10</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html"><i class="fa fa-check"></i><b>3</b> Time series decomposition</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#transformations-and-adjustments"><i class="fa fa-check"></i><b>3.1</b> Transformations and adjustments</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#calendar-adjustments"><i class="fa fa-check"></i><b>3.1.1</b> Calendar adjustments</a></li>
+<li class="chapter" data-level="3.1.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#population-adjustments"><i class="fa fa-check"></i><b>3.1.2</b> Population adjustments</a></li>
+<li class="chapter" data-level="3.1.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#inflation-adjustments"><i class="fa fa-check"></i><b>3.1.3</b> Inflation adjustments</a></li>
+<li class="chapter" data-level="3.1.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#mathematical-transformations"><i class="fa fa-check"></i><b>3.1.4</b> Mathematical transformations</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#time-series-components"><i class="fa fa-check"></i><b>3.2</b> Time series components</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#seasonally-adjusted-data"><i class="fa fa-check"></i><b>3.2.1</b> Seasonally adjusted data</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-averages"><i class="fa fa-check"></i><b>3.3</b> Moving averages</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-average-smoothing"><i class="fa fa-check"></i><b>3.3.1</b> Moving average smoothing</a></li>
+<li class="chapter" data-level="3.3.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-averages-of-moving-averages"><i class="fa fa-check"></i><b>3.3.2</b> Moving averages of moving averages</a></li>
+<li class="chapter" data-level="3.3.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#estimating-the-trend-cycle-with-seasonal-data"><i class="fa fa-check"></i><b>3.3.3</b> Estimating the trend-cycle with seasonal data</a></li>
+<li class="chapter" data-level="3.3.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#example-employment-in-the-us-retail-sector"><i class="fa fa-check"></i><b>3.3.4</b> Example: Employment in the US retail sector</a></li>
+<li class="chapter" data-level="3.3.5" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#weighted-moving-averages"><i class="fa fa-check"></i><b>3.3.5</b> Weighted moving averages</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#classical-decomposition"><i class="fa fa-check"></i><b>3.4</b> Classical decomposition</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#additive-decomposition"><i class="fa fa-check"></i><b>3.4.1</b> Additive decomposition</a></li>
+<li class="chapter" data-level="3.4.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#multiplicative-decomposition"><i class="fa fa-check"></i><b>3.4.2</b> Multiplicative decomposition</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#excercises-2"><i class="fa fa-check"></i><b>3.5</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="time-series-features.html"><a href="time-series-features.html"><i class="fa fa-check"></i><b>4</b> Time series features</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="time-series-features.html"><a href="time-series-features.html#some-simple-statistics"><i class="fa fa-check"></i><b>4.1</b> Some simple statistics</a>
+<ul>
+<li class="chapter" data-level="4.1.1" data-path="time-series-features.html"><a href="time-series-features.html#acf-features"><i class="fa fa-check"></i><b>4.1.1</b> ACF features</a></li>
+<li class="chapter" data-level="4.1.2" data-path="time-series-features.html"><a href="time-series-features.html#stl-features"><i class="fa fa-check"></i><b>4.1.2</b> STL features</a></li>
+<li class="chapter" data-level="4.1.3" data-path="time-series-features.html"><a href="time-series-features.html#other-features"><i class="fa fa-check"></i><b>4.1.3</b> Other features</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="time-series-features.html"><a href="time-series-features.html#exploring-australian-tourism-data"><i class="fa fa-check"></i><b>4.2</b> Exploring Australian tourism data</a></li>
+<li class="chapter" data-level="4.3" data-path="time-series-features.html"><a href="time-series-features.html#exercises"><i class="fa fa-check"></i><b>4.3</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html"><i class="fa fa-check"></i><b>5</b> The forecaster’s toolbox</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#a-tidy-forecasting-workflow"><i class="fa fa-check"></i><b>5.1</b> A tidy forecasting workflow</a>
+<ul>
+<li class="chapter" data-level="5.1.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#data-preparation-tidy"><i class="fa fa-check"></i><b>5.1.1</b> Data preparation (tidy)</a></li>
+<li class="chapter" data-level="5.1.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#plot-the-data-visualise"><i class="fa fa-check"></i><b>5.1.2</b> Plot the data (visualise)</a></li>
+<li class="chapter" data-level="5.1.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#define-a-model-specify"><i class="fa fa-check"></i><b>5.1.3</b> Define a model (specify)</a></li>
+<li class="chapter" data-level="5.1.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#train-the-model-estimate"><i class="fa fa-check"></i><b>5.1.4</b> Train the model (estimate)</a></li>
+<li class="chapter" data-level="5.1.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#check-model-performance-evaluate"><i class="fa fa-check"></i><b>5.1.5</b> Check model performance (evaluate)</a></li>
+<li class="chapter" data-level="5.1.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#produce-forecasts-forecast"><i class="fa fa-check"></i><b>5.1.6</b> Produce forecasts (forecast)</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#some-simple-forecasting-methods"><i class="fa fa-check"></i><b>5.2</b> Some simple forecasting methods</a>
+<ul>
+<li class="chapter" data-level="5.2.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#mean-method"><i class="fa fa-check"></i><b>5.2.1</b> Mean method</a></li>
+<li class="chapter" data-level="5.2.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#naiïve-method"><i class="fa fa-check"></i><b>5.2.2</b> Naiïve method</a></li>
+<li class="chapter" data-level="5.2.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#seasonal-naïve-method"><i class="fa fa-check"></i><b>5.2.3</b> Seasonal naïve method</a></li>
+<li class="chapter" data-level="5.2.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#drift-method"><i class="fa fa-check"></i><b>5.2.4</b> Drift method</a></li>
+<li class="chapter" data-level="5.2.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#model-fitting"><i class="fa fa-check"></i><b>5.2.5</b> Model fitting</a></li>
+<li class="chapter" data-level="5.2.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#producing-forecasts"><i class="fa fa-check"></i><b>5.2.6</b> Producing forecasts</a></li>
+<li class="chapter" data-level="5.2.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#visualising-forecasts"><i class="fa fa-check"></i><b>5.2.7</b> Visualising forecasts</a></li>
+<li class="chapter" data-level="5.2.8" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-facebook-closing-stock-price"><i class="fa fa-check"></i><b>5.2.8</b> Example: Facebook closing stock price</a></li>
+<li class="chapter" data-level="5.2.9" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-australian-quarterly-beer-production"><i class="fa fa-check"></i><b>5.2.9</b> Example: Australian quarterly beer production</a></li>
+<li class="chapter" data-level="5.2.10" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-googles-daily-closing-stock-price"><i class="fa fa-check"></i><b>5.2.10</b> Example: Google’s daily closing stock price</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#fitted-values-and-residuals"><i class="fa fa-check"></i><b>5.3</b> Fitted values and residuals</a>
+<ul>
+<li class="chapter" data-level="5.3.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#fitted-values"><i class="fa fa-check"></i><b>5.3.1</b> Fitted values</a></li>
+<li class="chapter" data-level="5.3.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#residuals"><i class="fa fa-check"></i><b>5.3.2</b> Residuals</a></li>
+</ul></li>
+<li class="chapter" data-level="5.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#residual-diagnostics"><i class="fa fa-check"></i><b>5.4</b> Residual diagnostics</a>
+<ul>
+<li class="chapter" data-level="5.4.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#acf-of-residuals"><i class="fa fa-check"></i><b>5.4.1</b> ACF of residuals</a></li>
+<li class="chapter" data-level="5.4.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-forecasting-google-daily-closing-stock-prices"><i class="fa fa-check"></i><b>5.4.2</b> Example: Forecasting Google daily closing stock prices</a></li>
+<li class="chapter" data-level="5.4.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#portmanteau-tests-for-autocorrelation"><i class="fa fa-check"></i><b>5.4.3</b> Portmanteau tests for autocorrelation</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#distributional-forecasts-and-prediction-intervals"><i class="fa fa-check"></i><b>5.5</b> Distributional forecasts and prediction intervals</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecast-distributions"><i class="fa fa-check"></i><b>5.5.1</b> Forecast distributions</a></li>
+<li class="chapter" data-level="5.5.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#prediction-intervals"><i class="fa fa-check"></i><b>5.5.2</b> Prediction intervals</a></li>
+<li class="chapter" data-level="5.5.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#one-step-prediction-intervals"><i class="fa fa-check"></i><b>5.5.3</b> One-step prediction intervals</a></li>
+<li class="chapter" data-level="5.5.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#multi-step-prediction-intervals"><i class="fa fa-check"></i><b>5.5.4</b> Multi-step prediction intervals</a></li>
+<li class="chapter" data-level="5.5.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#benchmark-methods"><i class="fa fa-check"></i><b>5.5.5</b> Benchmark methods</a></li>
+<li class="chapter" data-level="5.5.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#prediction-intervals-from-bootstrapped-residuals"><i class="fa fa-check"></i><b>5.5.6</b> Prediction intervals from bootstrapped residuals</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecasting-using-transformations"><i class="fa fa-check"></i><b>5.6</b> Forecasting using transformations</a></li>
+<li class="chapter" data-level="5.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecasting-with-decomposition"><i class="fa fa-check"></i><b>5.7</b> Forecasting with decomposition</a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-employment-in-the-us-retail-sector-1"><i class="fa fa-check"></i><b>5.7.1</b> Example: Employment in the US retail sector</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#evaluating-point-forecast-accuracy"><i class="fa fa-check"></i><b>5.8</b> Evaluating point forecast accuracy</a>
+<ul>
+<li class="chapter" data-level="5.8.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#training-and-test-sets"><i class="fa fa-check"></i><b>5.8.1</b> Training and test sets</a></li>
+<li class="chapter" data-level="5.8.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#functions-to-subset-a-time-series"><i class="fa fa-check"></i><b>5.8.2</b> Functions to subset a time series</a></li>
+<li class="chapter" data-level="5.8.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecast-errors"><i class="fa fa-check"></i><b>5.8.3</b> Forecast errors</a></li>
+<li class="chapter" data-level="5.8.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scale-dependent-errors"><i class="fa fa-check"></i><b>5.8.4</b> Scale-dependent errors</a></li>
+<li class="chapter" data-level="5.8.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#percentage-errors"><i class="fa fa-check"></i><b>5.8.5</b> Percentage errors</a></li>
+<li class="chapter" data-level="5.8.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scaled-errors"><i class="fa fa-check"></i><b>5.8.6</b> Scaled errors</a></li>
+<li class="chapter" data-level="5.8.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#examples"><i class="fa fa-check"></i><b>5.8.7</b> Examples</a></li>
+</ul></li>
+<li class="chapter" data-level="5.9" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#evaluating-distributional-forecast-accuracy"><i class="fa fa-check"></i><b>5.9</b> Evaluating distributional forecast accuracy</a>
+<ul>
+<li class="chapter" data-level="5.9.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#quantile-scores"><i class="fa fa-check"></i><b>5.9.1</b> Quantile scores</a></li>
+<li class="chapter" data-level="5.9.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#winkler-score"><i class="fa fa-check"></i><b>5.9.2</b> Winkler Score</a></li>
+<li class="chapter" data-level="5.9.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#continuous-ranked-probability-score"><i class="fa fa-check"></i><b>5.9.3</b> Continuous Ranked Probability Score</a></li>
+<li class="chapter" data-level="5.9.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scale-free-comparisons-using-skill-scores"><i class="fa fa-check"></i><b>5.9.4</b> Scale-free comparisons using skill scores</a></li>
+</ul></li>
+<li class="chapter" data-level="5.10" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#time-series-cross-validation"><i class="fa fa-check"></i><b>5.10</b> Time series cross-validation</a>
+<ul>
+<li class="chapter" data-level="5.10.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-forecast-horizon-accuracy-with-cross-validation"><i class="fa fa-check"></i><b>5.10.1</b> Example: Forecast horizon accuracy with cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="5.11" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#exercises-1"><i class="fa fa-check"></i><b>5.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html"><i class="fa fa-check"></i><b>6</b> Judgmental forecasts</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#beware-of-limitations"><i class="fa fa-check"></i><b>6.1</b> Beware of limitations</a></li>
+<li class="chapter" data-level="6.2" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#key-principles"><i class="fa fa-check"></i><b>6.2</b> Key principles</a></li>
+<li class="chapter" data-level="6.3" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#the-delphi-method"><i class="fa fa-check"></i><b>6.3</b> The Delphi method</a></li>
+<li class="chapter" data-level="6.4" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#forecasting-by-analogy"><i class="fa fa-check"></i><b>6.4</b> Forecasting by analogy</a></li>
+<li class="chapter" data-level="6.5" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#scenario-forecasting"><i class="fa fa-check"></i><b>6.5</b> Scenario forecasting</a></li>
+<li class="chapter" data-level="6.6" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#new-product-forecasting"><i class="fa fa-check"></i><b>6.6</b> New product forecasting</a></li>
+<li class="chapter" data-level="6.7" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#judgmental-adjustments"><i class="fa fa-check"></i><b>6.7</b> Judgmental adjustments</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html"><i class="fa fa-check"></i><b>7</b> Time series regression models</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#the-linear-model"><i class="fa fa-check"></i><b>7.1</b> The linear model</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#simple-linear-regression"><i class="fa fa-check"></i><b>7.1.1</b> Simple linear regression</a></li>
+<li class="chapter" data-level="7.1.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#multiple-linear-regression"><i class="fa fa-check"></i><b>7.1.2</b> Multiple linear regression</a></li>
+<li class="chapter" data-level="7.1.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#assumptions"><i class="fa fa-check"></i><b>7.1.3</b> Assumptions</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#least-squares-estimation"><i class="fa fa-check"></i><b>7.2</b> Least squares estimation</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#fitted-values-1"><i class="fa fa-check"></i><b>7.2.1</b> Fitted values</a></li>
+<li class="chapter" data-level="7.2.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#goodness-of-fit"><i class="fa fa-check"></i><b>7.2.2</b> Goodness-of-fit</a></li>
+<li class="chapter" data-level="7.2.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#standard-error-of-the-regression"><i class="fa fa-check"></i><b>7.2.3</b> Standard error of the regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#evaluating-the-regression-model"><i class="fa fa-check"></i><b>7.3</b> Evaluating the regression model</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#acf-plot-of-residuals"><i class="fa fa-check"></i><b>7.3.1</b> ACF plot of residuals</a></li>
+<li class="chapter" data-level="7.3.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#histogram-of-residuals"><i class="fa fa-check"></i><b>7.3.2</b> Histogram of residuals</a></li>
+<li class="chapter" data-level="7.3.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#residual-plots-against-predictors"><i class="fa fa-check"></i><b>7.3.3</b> Residual plots against predictors</a></li>
+<li class="chapter" data-level="7.3.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#residual-plots-against-fitted-values"><i class="fa fa-check"></i><b>7.3.4</b> Residual plots against fitted values</a></li>
+<li class="chapter" data-level="7.3.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#outliers-and-influential-observations"><i class="fa fa-check"></i><b>7.3.5</b> Outliers and influential observations</a></li>
+<li class="chapter" data-level="7.3.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#spurious-regression"><i class="fa fa-check"></i><b>7.3.6</b> Spurious regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#some-useful-predictors"><i class="fa fa-check"></i><b>7.4</b> Some useful predictors</a>
+<ul>
+<li class="chapter" data-level="7.4.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#trend"><i class="fa fa-check"></i><b>7.4.1</b> Trend</a></li>
+<li class="chapter" data-level="7.4.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#dummy-variables"><i class="fa fa-check"></i><b>7.4.2</b> Dummy variables</a></li>
+<li class="chapter" data-level="7.4.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#seasonal-dummy-variables"><i class="fa fa-check"></i><b>7.4.3</b> Seasonal dummy variables</a></li>
+<li class="chapter" data-level="7.4.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#intervention-variables"><i class="fa fa-check"></i><b>7.4.4</b> Intervention variables</a></li>
+<li class="chapter" data-level="7.4.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#trading-days"><i class="fa fa-check"></i><b>7.4.5</b> Trading days</a></li>
+<li class="chapter" data-level="7.4.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#distributed-lags"><i class="fa fa-check"></i><b>7.4.6</b> Distributed lags</a></li>
+</ul></li>
+<li class="chapter" data-level="7.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#selecting-predictors"><i class="fa fa-check"></i><b>7.5</b> Selecting predictors</a>
+<ul>
+<li class="chapter" data-level="7.5.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#adjusted-r2"><i class="fa fa-check"></i><b>7.5.1</b> Adjusted <span class="math inline">\(R^2\)</span></a></li>
+<li class="chapter" data-level="7.5.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#cross-validation"><i class="fa fa-check"></i><b>7.5.2</b> Cross-validation</a></li>
+<li class="chapter" data-level="7.5.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#akaikes-information-criterion"><i class="fa fa-check"></i><b>7.5.3</b> Akaike’s Information Criterion</a></li>
+<li class="chapter" data-level="7.5.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#corrected-akaikes-information-criterion"><i class="fa fa-check"></i><b>7.5.4</b> Corrected Akaike’s Information Criterion</a></li>
+<li class="chapter" data-level="7.5.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#schwarzs-bayesian-information-criterion"><i class="fa fa-check"></i><b>7.5.5</b> Schwarz’s Bayesian Information Criterion</a></li>
+<li class="chapter" data-level="7.5.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#stepwise-regression"><i class="fa fa-check"></i><b>7.5.6</b> Stepwise regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-regression"><i class="fa fa-check"></i><b>7.6</b> Forecasting with regression</a>
+<ul>
+<li class="chapter" data-level="7.6.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#scenario-based-forecasting"><i class="fa fa-check"></i><b>7.6.1</b> Scenario based forecasting</a></li>
+<li class="chapter" data-level="7.6.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#prediction-intervals-1"><i class="fa fa-check"></i><b>7.6.2</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="7.7" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#nonlinear-regression"><i class="fa fa-check"></i><b>7.7</b> Nonlinear regression</a>
+<ul>
+<li class="chapter" data-level="7.7.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-a-nonlinear-trend"><i class="fa fa-check"></i><b>7.7.1</b> Forecasting with a nonlinear trend</a></li>
+</ul></li>
+<li class="chapter" data-level="7.8" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#correlation-causation-and-forecasting"><i class="fa fa-check"></i><b>7.8</b> Correlation, causation and forecasting</a>
+<ul>
+<li class="chapter" data-level="7.8.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#correlation-is-not-causation"><i class="fa fa-check"></i><b>7.8.1</b> Correlation is not causation</a></li>
+<li class="chapter" data-level="7.8.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-correlated-predictors"><i class="fa fa-check"></i><b>7.8.2</b> Forecasting with correlated predictors</a></li>
+<li class="chapter" data-level="7.8.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#multicollinearity-and-forecasting"><i class="fa fa-check"></i><b>7.8.3</b> Multicollinearity and forecasting</a></li>
+</ul></li>
+<li class="chapter" data-level="7.9" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#exercises-2"><i class="fa fa-check"></i><b>7.9</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html"><i class="fa fa-check"></i><b>8</b> Exponential Smoothing</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#simple-exponential-smoothing"><i class="fa fa-check"></i><b>8.1</b> Simple exponential smoothing</a>
+<ul>
+<li class="chapter" data-level="8.1.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#weighted-average-form"><i class="fa fa-check"></i><b>8.1.1</b> Weighted average form</a></li>
+<li class="chapter" data-level="8.1.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#component-form"><i class="fa fa-check"></i><b>8.1.2</b> Component form</a></li>
+<li class="chapter" data-level="8.1.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#flat-forecast"><i class="fa fa-check"></i><b>8.1.3</b> Flat forecast</a></li>
+<li class="chapter" data-level="8.1.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#optimisation"><i class="fa fa-check"></i><b>8.1.4</b> Optimisation</a></li>
+<li class="chapter" data-level="8.1.5" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-algerian-exports"><i class="fa fa-check"></i><b>8.1.5</b> Example: Algerian exports</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#methods-with-trend"><i class="fa fa-check"></i><b>8.2</b> Methods with trend</a>
+<ul>
+<li class="chapter" data-level="8.2.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holts-linear-trend-method"><i class="fa fa-check"></i><b>8.2.1</b> Holt’s linear trend method</a></li>
+<li class="chapter" data-level="8.2.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#damped-trend-methods"><i class="fa fa-check"></i><b>8.2.2</b> Damped trend methods</a></li>
+</ul></li>
+<li class="chapter" data-level="8.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#methods-with-seasonality"><i class="fa fa-check"></i><b>8.3</b> Methods with seasonality</a>
+<ul>
+<li class="chapter" data-level="8.3.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-additive-method"><i class="fa fa-check"></i><b>8.3.1</b> Holt-Winters’ additive method</a></li>
+<li class="chapter" data-level="8.3.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-multiplicative-method"><i class="fa fa-check"></i><b>8.3.2</b> Holt-Winters’ multiplicative method</a></li>
+<li class="chapter" data-level="8.3.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-domestic-overnight-trips-in-australia"><i class="fa fa-check"></i><b>8.3.3</b> Example: Domestic overnight trips in Australia</a></li>
+<li class="chapter" data-level="8.3.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-damped-method"><i class="fa fa-check"></i><b>8.3.4</b> Holt-Winters’ damped method</a></li>
+</ul></li>
+<li class="chapter" data-level="8.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#a-taxonomy-of-exponential-smoothing-methods"><i class="fa fa-check"></i><b>8.4</b> A taxonomy of exponential smoothing methods</a></li>
+<li class="chapter" data-level="8.5" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#innovations-state-space-models-for-exponential-smoothing"><i class="fa fa-check"></i><b>8.5</b> Innovations state space models for exponential smoothing</a></li>
+<li class="chapter" data-level="8.6" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#estimation-and-model-selection"><i class="fa fa-check"></i><b>8.6</b> Estimation and model selection</a>
+<ul>
+<li class="chapter" data-level="8.6.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#model-selection"><i class="fa fa-check"></i><b>8.6.1</b> Model selection</a></li>
+<li class="chapter" data-level="8.6.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-domestic-holiday-tourist-visitor-nights-in-australia"><i class="fa fa-check"></i><b>8.6.2</b> Example: Domestic holiday tourist visitor nights in Australia</a></li>
+</ul></li>
+<li class="chapter" data-level="8.7" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#forecasting-with-ets-models"><i class="fa fa-check"></i><b>8.7</b> Forecasting with ETS models</a>
+<ul>
+<li class="chapter" data-level="8.7.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#prediction-intervals-2"><i class="fa fa-check"></i><b>8.7.1</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="8.8" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#excercises-3"><i class="fa fa-check"></i><b>8.8</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="arima-models.html"><a href="arima-models.html"><i class="fa fa-check"></i><b>9</b> ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="arima-models.html"><a href="arima-models.html#stationarity-and-differencing"><i class="fa fa-check"></i><b>9.1</b> Stationarity and differencing</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="arima-models.html"><a href="arima-models.html#differencing"><i class="fa fa-check"></i><b>9.1.1</b> Differencing</a></li>
+<li class="chapter" data-level="9.1.2" data-path="arima-models.html"><a href="arima-models.html#second-order-differencing"><i class="fa fa-check"></i><b>9.1.2</b> Second-order differencing</a></li>
+<li class="chapter" data-level="9.1.3" data-path="arima-models.html"><a href="arima-models.html#seasonal-differencing"><i class="fa fa-check"></i><b>9.1.3</b> Seasonal differencing</a></li>
+<li class="chapter" data-level="9.1.4" data-path="arima-models.html"><a href="arima-models.html#unit-root-tests"><i class="fa fa-check"></i><b>9.1.4</b> Unit root tests</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="arima-models.html"><a href="arima-models.html#backshift-notation"><i class="fa fa-check"></i><b>9.2</b> Backshift notation</a></li>
+<li class="chapter" data-level="9.3" data-path="arima-models.html"><a href="arima-models.html#autoregressive-ar-models"><i class="fa fa-check"></i><b>9.3</b> Autoregressive (AR) models</a>
+<ul>
+<li class="chapter" data-level="9.3.1" data-path="arima-models.html"><a href="arima-models.html#ar1-model"><i class="fa fa-check"></i><b>9.3.1</b> AR(1) model</a></li>
+<li class="chapter" data-level="9.3.2" data-path="arima-models.html"><a href="arima-models.html#ar2-model"><i class="fa fa-check"></i><b>9.3.2</b> AR(2) model</a></li>
+</ul></li>
+<li class="chapter" data-level="9.4" data-path="arima-models.html"><a href="arima-models.html#moving-average-models"><i class="fa fa-check"></i><b>9.4</b> Moving average models</a></li>
+<li class="chapter" data-level="9.5" data-path="arima-models.html"><a href="arima-models.html#non-seasonal-arima-models"><i class="fa fa-check"></i><b>9.5</b> Non-seasonal ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="arima-models.html"><a href="arima-models.html#example-egyptian-exports"><i class="fa fa-check"></i><b>9.5.1</b> Example: Egyptian exports</a></li>
+<li class="chapter" data-level="9.5.2" data-path="arima-models.html"><a href="arima-models.html#acf-and-pacf-plots"><i class="fa fa-check"></i><b>9.5.2</b> ACF and PACF plots</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="arima-models.html"><a href="arima-models.html#estimation-and-order-selection"><i class="fa fa-check"></i><b>9.6</b> Estimation and order selection</a></li>
+<li class="chapter" data-level="9.7" data-path="arima-models.html"><a href="arima-models.html#arima-modelling-in-fable"><i class="fa fa-check"></i><b>9.7</b> ARIMA modelling in <code>fable</code></a>
+<ul>
+<li class="chapter" data-level="9.7.1" data-path="arima-models.html"><a href="arima-models.html#how-does-arima-work"><i class="fa fa-check"></i><b>9.7.1</b> How does ARIMA() work?</a></li>
+<li class="chapter" data-level="9.7.2" data-path="arima-models.html"><a href="arima-models.html#modelling-procedure"><i class="fa fa-check"></i><b>9.7.2</b> Modelling procedure</a></li>
+<li class="chapter" data-level="9.7.3" data-path="arima-models.html"><a href="arima-models.html#example-central-african-republic-exports"><i class="fa fa-check"></i><b>9.7.3</b> Example: Central African Republic exports</a></li>
+</ul></li>
+<li class="chapter" data-level="9.8" data-path="arima-models.html"><a href="arima-models.html#forecasting"><i class="fa fa-check"></i><b>9.8</b> Forecasting</a>
+<ul>
+<li class="chapter" data-level="9.8.1" data-path="arima-models.html"><a href="arima-models.html#prediction-intervals-3"><i class="fa fa-check"></i><b>9.8.1</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="9.9" data-path="arima-models.html"><a href="arima-models.html#seasonal-arima-models"><i class="fa fa-check"></i><b>9.9</b> Seasonal ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.9.1" data-path="arima-models.html"><a href="arima-models.html#arima-model-notation"><i class="fa fa-check"></i><b>9.9.1</b> ARIMA Model Notation</a></li>
+<li class="chapter" data-level="9.9.2" data-path="arima-models.html"><a href="arima-models.html#acfpacf"><i class="fa fa-check"></i><b>9.9.2</b> ACF/PACF</a></li>
+<li class="chapter" data-level="9.9.3" data-path="arima-models.html"><a href="arima-models.html#example-monthly-us-leisure-and-hospitality-employment"><i class="fa fa-check"></i><b>9.9.3</b> Example: Monthly US leisure and hospitality employment</a></li>
+</ul></li>
+<li class="chapter" data-level="9.10" data-path="arima-models.html"><a href="arima-models.html#arima-vs-ets"><i class="fa fa-check"></i><b>9.10</b> ARIMA vs ETS</a>
+<ul>
+<li class="chapter" data-level="9.10.1" data-path="arima-models.html"><a href="arima-models.html#comparing-arima-and-ets-on-non-seasonal-data"><i class="fa fa-check"></i><b>9.10.1</b> Comparing <code>ARIMA()</code> and <code>ETS()</code> on non-seasonal data</a></li>
+<li class="chapter" data-level="9.10.2" data-path="arima-models.html"><a href="arima-models.html#comparing-arima-and-ets-on-seasonal-data"><i class="fa fa-check"></i><b>9.10.2</b> Comparing <code>ARIMA()</code> and <code>ETS()</code> on seasonal data</a></li>
+</ul></li>
+<li class="chapter" data-level="9.11" data-path="arima-models.html"><a href="arima-models.html#exercises-3"><i class="fa fa-check"></i><b>9.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html"><i class="fa fa-check"></i><b>10</b> Dynamic regression models</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#regression-with-arima-errors-using-fable"><i class="fa fa-check"></i><b>10.1</b> Regression with ARIMA errors using <code>fable</code></a>
+<ul>
+<li class="chapter" data-level="10.1.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-us-personal-consumption-and-income"><i class="fa fa-check"></i><b>10.1.1</b> Example: US Personal Consumption and Income</a></li>
+</ul></li>
+<li class="chapter" data-level="10.2" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#forecasting-1"><i class="fa fa-check"></i><b>10.2</b> Forecasting</a>
+<ul>
+<li class="chapter" data-level="10.2.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-us-personal-consumption-and-income-1"><i class="fa fa-check"></i><b>10.2.1</b> Example: US Personal Consumption and Income</a></li>
+<li class="chapter" data-level="10.2.2" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-forecasting-electricity-demand"><i class="fa fa-check"></i><b>10.2.2</b> Example: Forecasting electricity demand</a></li>
+</ul></li>
+<li class="chapter" data-level="10.3" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#stochastic-and-deterministic-trends"><i class="fa fa-check"></i><b>10.3</b> Stochastic and deterministic trends</a>
+<ul>
+<li class="chapter" data-level="10.3.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-air-transport-passengers-australia"><i class="fa fa-check"></i><b>10.3.1</b> Example: Air transport passengers Australia</a></li>
+</ul></li>
+<li class="chapter" data-level="10.4" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#dynamic-harmonic-regression"><i class="fa fa-check"></i><b>10.4</b> Dynamic harmonic regression</a></li>
+<li class="chapter" data-level="10.5" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-australian-eating-out-expenditure"><i class="fa fa-check"></i><b>10.5</b> Example: Australian eating out expenditure</a></li>
+<li class="chapter" data-level="10.6" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#lagged-predictors"><i class="fa fa-check"></i><b>10.6</b> Lagged predictors</a>
+<ul>
+<li class="chapter" data-level="10.6.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-tv-advertising-and-insurance-quotations"><i class="fa fa-check"></i><b>10.6.1</b> Example: TV advertising and insurance quotations</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html"><i class="fa fa-check"></i><b>11</b> Forecasting hierarchical and grouped time series</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#hierarchical-and-grouped-time-series"><i class="fa fa-check"></i><b>11.1</b> Hierarchical and grouped time series</a>
+<ul>
+<li class="chapter" data-level="11.1.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#hierarchical-time-series"><i class="fa fa-check"></i><b>11.1.1</b> Hierarchical time series</a></li>
+<li class="chapter" data-level="11.1.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#example-australian-tourism-hierarchy"><i class="fa fa-check"></i><b>11.1.2</b> Example: Australian tourism hierarchy</a></li>
+<li class="chapter" data-level="11.1.3" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#grouped-time-series"><i class="fa fa-check"></i><b>11.1.3</b> Grouped time series</a></li>
+<li class="chapter" data-level="11.1.4" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#example-australian-prison-population"><i class="fa fa-check"></i><b>11.1.4</b> Example: Australian prison population</a></li>
+<li class="chapter" data-level="11.1.5" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#mixed-hierarchical-and-grouped-structure"><i class="fa fa-check"></i><b>11.1.5</b> Mixed hierarchical and grouped structure</a></li>
+</ul></li>
+<li class="chapter" data-level="11.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#single-level-approaches"><i class="fa fa-check"></i><b>11.2</b> Single level approaches</a>
+<ul>
+<li class="chapter" data-level="11.2.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#the-bottom-up-approach"><i class="fa fa-check"></i><b>11.2.1</b> The bottom-up approach</a></li>
+<li class="chapter" data-level="11.2.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#top-down-approaches"><i class="fa fa-check"></i><b>11.2.2</b> Top-down approaches</a></li>
+</ul></li>
+<li class="chapter" data-level="11.3" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecast-reconciliation"><i class="fa fa-check"></i><b>11.3</b> Forecast reconciliation</a></li>
+<li class="chapter" data-level="11.4" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecasting-australian-domestic-tourism"><i class="fa fa-check"></i><b>11.4</b> Forecasting Australian domestic tourism</a></li>
+<li class="chapter" data-level="11.5" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#reconciled-distributional-forecasts"><i class="fa fa-check"></i><b>11.5</b> Reconciled distributional forecasts</a></li>
+<li class="chapter" data-level="11.6" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecasting-australian-prison-population"><i class="fa fa-check"></i><b>11.6</b> Forecasting Australian prison population</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html"><i class="fa fa-check"></i><b>12</b> Advanced forecasting methods</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#complex-seasonality"><i class="fa fa-check"></i><b>12.1</b> Complex seasonality</a>
+<ul>
+<li class="chapter" data-level="12.1.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#stl-with-multiple-seasonal-periods"><i class="fa fa-check"></i><b>12.1.1</b> STL with multiple seasonal periods</a></li>
+</ul></li>
+<li class="chapter" data-level="12.2" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#prophet-model"><i class="fa fa-check"></i><b>12.2</b> Prophet model</a>
+<ul>
+<li class="chapter" data-level="12.2.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#example-quarterly-cement-production"><i class="fa fa-check"></i><b>12.2.1</b> Example: Quarterly cement production</a></li>
+<li class="chapter" data-level="12.2.2" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#example-half-hourly-electricity-demand"><i class="fa fa-check"></i><b>12.2.2</b> Example: Half-hourly electricity demand</a></li>
+</ul></li>
+<li class="chapter" data-level="12.3" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#vector-autoregressions"><i class="fa fa-check"></i><b>12.3</b> Vector autoregressions</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/daluchkin?tab=repositories">All Repositories</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Forecasting: Principles and Practice (3rd ed)</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="time-series-features" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">Chapter 4</span> Time series features<a href="time-series-features.html#time-series-features" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p><a href="https://otexts.com/fpp3/features.html">The source of the chapter</a></p>
+<div class="sourceCode" id="cb455"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb455-1"><a href="time-series-features.html#cb455-1" tabindex="-1"></a><span class="co"># loading libraries</span></span>
+<span id="cb455-2"><a href="time-series-features.html#cb455-2" tabindex="-1"></a><span class="fu">library</span>(tsibble)</span>
+<span id="cb455-3"><a href="time-series-features.html#cb455-3" tabindex="-1"></a><span class="fu">library</span>(tsibbledata)</span>
+<span id="cb455-4"><a href="time-series-features.html#cb455-4" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb455-5"><a href="time-series-features.html#cb455-5" tabindex="-1"></a><span class="co"># to read data</span></span>
+<span id="cb455-6"><a href="time-series-features.html#cb455-6" tabindex="-1"></a><span class="fu">library</span>(rio)</span>
+<span id="cb455-7"><a href="time-series-features.html#cb455-7" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb455-8"><a href="time-series-features.html#cb455-8" tabindex="-1"></a><span class="fu">library</span>(fabletools)</span>
+<span id="cb455-9"><a href="time-series-features.html#cb455-9" tabindex="-1"></a><span class="fu">library</span>(feasts)</span>
+<span id="cb455-10"><a href="time-series-features.html#cb455-10" tabindex="-1"></a><span class="fu">library</span>(fpp3)</span>
+<span id="cb455-11"><a href="time-series-features.html#cb455-11" tabindex="-1"></a><span class="fu">library</span>(latex2exp)</span>
+<span id="cb455-12"><a href="time-series-features.html#cb455-12" tabindex="-1"></a><span class="fu">library</span>(forecast)</span></code></pre></div>
+<p>Different features of time series could be used to explore the properties of the series.</p>
+<div id="some-simple-statistics" class="section level2 hasAnchor" number="4.1">
+<h2><span class="header-section-number">4.1</span> Some simple statistics<a href="time-series-features.html#some-simple-statistics" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p><a href="https://otexts.com/fpp3/some-simple-statistics.html">The source of the section</a></p>
+<div class="sourceCode" id="cb456"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb456-1"><a href="time-series-features.html#cb456-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb456-2"><a href="time-series-features.html#cb456-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, <span class="fu">list</span>(<span class="at">mean=</span>mean)) <span class="sc">|&gt;</span></span>
+<span id="cb456-3"><a href="time-series-features.html#cb456-3" tabindex="-1"></a>  <span class="fu">arrange</span>(mean)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 4
+##    Region          State Purpose   mean
+##    &lt;chr&gt;           &lt;chr&gt; &lt;chr&gt;    &lt;dbl&gt;
+##  1 Kangaroo Island SA    Other    0.340
+##  2 MacDonnell      NT    Other    0.449
+##  3 Wilderness West TAS   Other    0.478
+##  4 Barkly          NT    Other    0.632
+##  5 Clare Valley    SA    Other    0.898
+##  6 Barossa         SA    Other    1.02 
+##  7 Kakadu Arnhem   NT    Other    1.04 
+##  8 Lasseter        NT    Other    1.14 
+##  9 Wimmera         VIC   Other    1.15 
+## 10 MacDonnell      NT    Visiting 1.18 
+## # ℹ 294 more rows</code></pre>
+<div class="sourceCode" id="cb458"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb458-1"><a href="time-series-features.html#cb458-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb458-2"><a href="time-series-features.html#cb458-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, quantile)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 8
+##    Region         State Purpose     `0%`  `25%`   `50%`  `75%` `100%`
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+##  1 Adelaide       SA    Business  68.7   134.   153.    177.   242.  
+##  2 Adelaide       SA    Holiday  108.    135.   154.    172.   224.  
+##  3 Adelaide       SA    Other     25.9    43.9   53.8    62.5  107.  
+##  4 Adelaide       SA    Visiting 137.    179.   206.    229.   270.  
+##  5 Adelaide Hills SA    Business   0       0      1.26    3.92  28.6 
+##  6 Adelaide Hills SA    Holiday    0       5.77   8.52   14.1   35.8 
+##  7 Adelaide Hills SA    Other      0       0      0.908   2.09   8.95
+##  8 Adelaide Hills SA    Visiting   0.778   8.91  12.2    16.8   81.1 
+##  9 Alice Springs  NT    Business   1.01    9.13  13.3    18.5   34.1 
+## 10 Alice Springs  NT    Holiday    2.81   16.9   31.5    44.8   76.5 
+## # ℹ 294 more rows</code></pre>
+<div id="acf-features" class="section level3 hasAnchor" number="4.1.1">
+<h3><span class="header-section-number">4.1.1</span> ACF features<a href="time-series-features.html#acf-features" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><a href="https://otexts.com/fpp3/acf-features.html">The source of the section</a></p>
+<div class="sourceCode" id="cb460"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb460-1"><a href="time-series-features.html#cb460-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb460-2"><a href="time-series-features.html#cb460-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, feat_acf)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 10
+##    Region         State Purpose      acf1 acf10 diff1_acf1 diff1_acf10 diff2_acf1 diff2_acf10 season_acf1
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;
+##  1 Adelaide       SA    Business  0.0333  0.131     -0.520       0.463     -0.676       0.741      0.201 
+##  2 Adelaide       SA    Holiday   0.0456  0.372     -0.343       0.614     -0.487       0.558      0.351 
+##  3 Adelaide       SA    Other     0.517   1.15      -0.409       0.383     -0.675       0.792      0.342 
+##  4 Adelaide       SA    Visiting  0.0684  0.294     -0.394       0.452     -0.518       0.447      0.345 
+##  5 Adelaide Hills SA    Business  0.0709  0.134     -0.580       0.415     -0.750       0.746     -0.0628
+##  6 Adelaide Hills SA    Holiday   0.131   0.313     -0.536       0.500     -0.716       0.906      0.208 
+##  7 Adelaide Hills SA    Other     0.261   0.330     -0.253       0.317     -0.457       0.392      0.0745
+##  8 Adelaide Hills SA    Visiting  0.139   0.117     -0.472       0.239     -0.626       0.408      0.170 
+##  9 Alice Springs  NT    Business  0.217   0.367     -0.500       0.381     -0.658       0.587      0.315 
+## 10 Alice Springs  NT    Holiday  -0.00660 2.11      -0.153       2.11      -0.274       1.55       0.729 
+## # ℹ 294 more rows</code></pre>
+</div>
+<div id="stl-features" class="section level3 hasAnchor" number="4.1.2">
+<h3><span class="header-section-number">4.1.2</span> STL features<a href="time-series-features.html#stl-features" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><a href="https://otexts.com/fpp3/stlfeatures.html">The source of the section</a></p>
+<ol style="list-style-type: decimal">
+<li>Strength of trend:</li>
+</ol>
+<blockquote>
+<p>For strongly trended data, the seasonally adjusted data should have much more variation than the remainder But for data with little or no trend, the two variances should be approximately the same.</p>
+</blockquote>
+<p><span class="math display">\[
+F_T = max(0, 1 - \frac {Var(R_t)} {Var(T_t + R_t)}), [0, 1]
+\]</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li>Strength of seasonality:</li>
+</ol>
+<blockquote>
+<p>A series with seasonal strength <span class="math inline">\(F_S\)</span> close to 0 exhibits almost no seasonality, while a series with strong seasonality will have <span class="math inline">\(F_S\)</span> close to 1.</p>
+</blockquote>
+<p><span class="math display">\[
+F_S = max(0, 1 - \frac {Var(R_t)} {Var(S_t + R_t)}), [0, 1]
+\]</span></p>
+<div class="sourceCode" id="cb462"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb462-1"><a href="time-series-features.html#cb462-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb462-2"><a href="time-series-features.html#cb462-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, feat_stl)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 12
+##    Region         State Purpose  trend_strength seasonal_strength_year seasonal_peak_year seasonal_trough_year  spikiness linearity curvature stl_e_acf1 stl_e_acf10
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;             &lt;dbl&gt;                  &lt;dbl&gt;              &lt;dbl&gt;                &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;
+##  1 Adelaide       SA    Business          0.464                  0.407                  3                    1 158.          -5.31     71.6       -0.532       0.594
+##  2 Adelaide       SA    Holiday           0.554                  0.619                  1                    2   9.17        49.0      78.7       -0.510       0.561
+##  3 Adelaide       SA    Other             0.746                  0.202                  2                    1   2.10        95.1      43.4       -0.351       0.403
+##  4 Adelaide       SA    Visiting          0.435                  0.452                  1                    3  56.1         34.6      71.4       -0.501       1.01 
+##  5 Adelaide Hills SA    Business          0.464                  0.179                  3                    0   0.103        0.968    -3.22      -0.600       0.497
+##  6 Adelaide Hills SA    Holiday           0.528                  0.296                  2                    1   0.177       10.5      24.0       -0.481       0.350
+##  7 Adelaide Hills SA    Other             0.593                  0.404                  2                    2   0.000444     4.28      3.19      -0.298       0.281
+##  8 Adelaide Hills SA    Visiting          0.488                  0.254                  0                    3   6.50        34.2      -0.529     -0.472       0.446
+##  9 Alice Springs  NT    Business          0.534                  0.251                  0                    1   0.169       23.8      19.5       -0.492       0.548
+## 10 Alice Springs  NT    Holiday           0.381                  0.832                  3                    1   0.739      -19.6      10.5       -0.522       0.726
+## # ℹ 294 more rows</code></pre>
+<p>To identify what type of series are heavily trended and what are most seasonal.</p>
+<div class="sourceCode" id="cb464"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb464-1"><a href="time-series-features.html#cb464-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb464-2"><a href="time-series-features.html#cb464-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, feat_stl) <span class="sc">|&gt;</span></span>
+<span id="cb464-3"><a href="time-series-features.html#cb464-3" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> trend_strength, <span class="at">y =</span> seasonal_strength_year, <span class="at">col =</span> Purpose)) <span class="sc">+</span></span>
+<span id="cb464-4"><a href="time-series-features.html#cb464-4" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb464-5"><a href="time-series-features.html#cb464-5" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(State))</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-6-1.png" width="672" /></p>
+<p>The most seasonal series can also be easily identified and plotted.</p>
+<div class="sourceCode" id="cb465"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb465-1"><a href="time-series-features.html#cb465-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb465-2"><a href="time-series-features.html#cb465-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, feat_stl) <span class="sc">|&gt;</span></span>
+<span id="cb465-3"><a href="time-series-features.html#cb465-3" tabindex="-1"></a>  <span class="fu">filter</span>(seasonal_strength_year <span class="sc">==</span> <span class="fu">max</span>(seasonal_strength_year)) <span class="sc">|&gt;</span></span>
+<span id="cb465-4"><a href="time-series-features.html#cb465-4" tabindex="-1"></a>  <span class="fu">left_join</span>(tourism, <span class="at">by=</span><span class="fu">c</span>(<span class="st">&#39;State&#39;</span>, <span class="st">&#39;Region&#39;</span>, <span class="st">&#39;Purpose&#39;</span>), <span class="at">multiple=</span><span class="st">&#39;all&#39;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb465-5"><a href="time-series-features.html#cb465-5" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Quarter, <span class="at">y =</span> Trips)) <span class="sc">+</span></span>
+<span id="cb465-6"><a href="time-series-features.html#cb465-6" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb465-7"><a href="time-series-features.html#cb465-7" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(State, Region, Purpose))</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-7-1.png" width="672" /></p>
+<p><code>feat_stl()</code> returns:</p>
+<ul>
+<li><code>trend_strength</code> is strength of trend</li>
+<li><code>seasonal_strength_year</code> is strength of seasonality</li>
+<li><code>seasonal_peak_year</code> indicates the timing of the peaks</li>
+<li><code>seasonal_trough_year</code> indicates the timing of the troughs</li>
+<li><code>spikiness</code> measures the prevalence of spikes in the remainder component</li>
+<li><code>linearity</code> measures the linearity of the trend component</li>
+<li><code>curvature</code> measures the curvature of the trend component</li>
+<li><code>stl_e_acf1</code> is the first autocorrelation coefficient</li>
+<li><code>stl_e_acf10</code> is the sum of squares of the first ten autocorrelation coefficients</li>
+</ul>
+</div>
+<div id="other-features" class="section level3 hasAnchor" number="4.1.3">
+<h3><span class="header-section-number">4.1.3</span> Other features<a href="time-series-features.html#other-features" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><a href="https://otexts.com/fpp3/other-features.html">The source of the section</a></p>
+<blockquote>
+<p><code>coef_hurst</code> will calculate the Hurst coefficient of a time series which is a measure of “long memory”. A series with long memory will have significant autocorrelations for many lags.</p>
+</blockquote>
+<div class="sourceCode" id="cb466"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb466-1"><a href="time-series-features.html#cb466-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb466-2"><a href="time-series-features.html#cb466-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, coef_hurst)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 4
+##    Region         State Purpose  coef_hurst
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;         &lt;dbl&gt;
+##  1 Adelaide       SA    Business      0.571
+##  2 Adelaide       SA    Holiday       0.558
+##  3 Adelaide       SA    Other         0.862
+##  4 Adelaide       SA    Visiting      0.583
+##  5 Adelaide Hills SA    Business      0.555
+##  6 Adelaide Hills SA    Holiday       0.651
+##  7 Adelaide Hills SA    Other         0.672
+##  8 Adelaide Hills SA    Visiting      0.653
+##  9 Alice Springs  NT    Business      0.713
+## 10 Alice Springs  NT    Holiday       0.500
+## # ℹ 294 more rows</code></pre>
+<p><strong>Interpretation:</strong></p>
+<ul>
+<li><span class="math inline">\(H = 0.5\)</span>: The time series is a random walk with no memory (random behavior).</li>
+<li><span class="math inline">\(H &lt; 0.5\)</span>: The time series tends to reverse direction.</li>
+<li><span class="math inline">\(H &gt; 0.5\)</span>: The time series is persistent, meaning that if the series has been increasing, it is more likely to continue increasing, and if it has been decreasing, it is more likely to continue decreasing.</li>
+</ul>
+<blockquote>
+<p><code>feat_spectral</code> will compute the (Shannon) spectral entropy of a time series, which is a measure of how easy the series is to forecast. A series which has strong trend and seasonality (and so is easy to forecast) will have entropy close to 0. A series that is very noisy (and so is difficult to forecast) will have entropy close to 1.</p>
+</blockquote>
+<div class="sourceCode" id="cb468"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb468-1"><a href="time-series-features.html#cb468-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb468-2"><a href="time-series-features.html#cb468-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, feat_spectral)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 4
+##    Region         State Purpose  spectral_entropy
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;               &lt;dbl&gt;
+##  1 Adelaide       SA    Business            0.843
+##  2 Adelaide       SA    Holiday             0.753
+##  3 Adelaide       SA    Other               0.793
+##  4 Adelaide       SA    Visiting            0.768
+##  5 Adelaide Hills SA    Business            0.991
+##  6 Adelaide Hills SA    Holiday             0.928
+##  7 Adelaide Hills SA    Other               0.913
+##  8 Adelaide Hills SA    Visiting            1    
+##  9 Alice Springs  NT    Business            0.944
+## 10 Alice Springs  NT    Holiday             0.544
+## # ℹ 294 more rows</code></pre>
+<blockquote>
+<p><code>box_pierce</code> gives the Box-Pierce statistic for testing if a time series is white noise, and the corresponding p-value.</p>
+</blockquote>
+<div class="sourceCode" id="cb470"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb470-1"><a href="time-series-features.html#cb470-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb470-2"><a href="time-series-features.html#cb470-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, box_pierce)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 5
+##    Region         State Purpose   bp_stat  bp_pvalue
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Adelaide       SA    Business  0.0886  0.766     
+##  2 Adelaide       SA    Holiday   0.166   0.684     
+##  3 Adelaide       SA    Other    21.4     0.00000379
+##  4 Adelaide       SA    Visiting  0.374   0.541     
+##  5 Adelaide Hills SA    Business  0.402   0.526     
+##  6 Adelaide Hills SA    Holiday   1.38    0.240     
+##  7 Adelaide Hills SA    Other     5.46    0.0195    
+##  8 Adelaide Hills SA    Visiting  1.55    0.213     
+##  9 Alice Springs  NT    Business  3.78    0.0518    
+## 10 Alice Springs  NT    Holiday   0.00349 0.953     
+## # ℹ 294 more rows</code></pre>
+<blockquote>
+<p><code>ljung_box</code> gives the Ljung-Box statistic for testing if a time series is white noise, and the corresponding p-value.</p>
+</blockquote>
+<div class="sourceCode" id="cb472"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb472-1"><a href="time-series-features.html#cb472-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb472-2"><a href="time-series-features.html#cb472-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, ljung_box)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 5
+##    Region         State Purpose   lb_stat  lb_pvalue
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Adelaide       SA    Business  0.0919  0.762     
+##  2 Adelaide       SA    Holiday   0.172   0.678     
+##  3 Adelaide       SA    Other    22.2     0.00000248
+##  4 Adelaide       SA    Visiting  0.388   0.533     
+##  5 Adelaide Hills SA    Business  0.418   0.518     
+##  6 Adelaide Hills SA    Holiday   1.43    0.231     
+##  7 Adelaide Hills SA    Other     5.66    0.0173    
+##  8 Adelaide Hills SA    Visiting  1.61    0.205     
+##  9 Alice Springs  NT    Business  3.93    0.0476    
+## 10 Alice Springs  NT    Holiday   0.00362 0.952     
+## # ℹ 294 more rows</code></pre>
+<blockquote>
+<p><code>guerrero</code> computes the optimal <span class="math inline">\(\lambda\)</span> value for a Box-Cox transformation using the Guerrero method</p>
+</blockquote>
+<div class="sourceCode" id="cb474"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb474-1"><a href="time-series-features.html#cb474-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb474-2"><a href="time-series-features.html#cb474-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, guerrero)</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 4
+##    Region         State Purpose  lambda_guerrero
+##    &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt;              &lt;dbl&gt;
+##  1 Adelaide       SA    Business         0.514  
+##  2 Adelaide       SA    Holiday         -0.169  
+##  3 Adelaide       SA    Other           -0.227  
+##  4 Adelaide       SA    Visiting         0.870  
+##  5 Adelaide Hills SA    Business         0.124  
+##  6 Adelaide Hills SA    Holiday          0.246  
+##  7 Adelaide Hills SA    Other            0.365  
+##  8 Adelaide Hills SA    Visiting         0.00414
+##  9 Alice Springs  NT    Business         0.561  
+## 10 Alice Springs  NT    Holiday          0.00174
+## # ℹ 294 more rows</code></pre>
+</div>
+</div>
+<div id="exploring-australian-tourism-data" class="section level2 hasAnchor" number="4.2">
+<h2><span class="header-section-number">4.2</span> Exploring Australian tourism data<a href="time-series-features.html#exploring-australian-tourism-data" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p><a href="https://otexts.com/fpp3/exploring-australian-tourism-data.html">The source of the section</a></p>
+<div class="sourceCode" id="cb476"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb476-1"><a href="time-series-features.html#cb476-1" tabindex="-1"></a>tourism_features <span class="ot">&lt;-</span> tourism <span class="sc">|&gt;</span></span>
+<span id="cb476-2"><a href="time-series-features.html#cb476-2" tabindex="-1"></a>  <span class="fu">features</span>(Trips, <span class="fu">feature_set</span>(<span class="at">pkgs =</span> <span class="st">&quot;feasts&quot;</span>))</span>
+<span id="cb476-3"><a href="time-series-features.html#cb476-3" tabindex="-1"></a>tourism_features</span></code></pre></div>
+<pre><code>## # A tibble: 304 × 51
+##    Region State Purpose trend_strength seasonal_strength_year seasonal_peak_year seasonal_trough_year spikiness linearity curvature stl_e_acf1 stl_e_acf10     acf1 acf10
+##    &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;            &lt;dbl&gt;                  &lt;dbl&gt;              &lt;dbl&gt;                &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+##  1 Adela… SA    Busine…          0.464                  0.407                  3                    1   1.58e+2    -5.31     71.6       -0.532       0.594  0.0333  0.131
+##  2 Adela… SA    Holiday          0.554                  0.619                  1                    2   9.17e+0    49.0      78.7       -0.510       0.561  0.0456  0.372
+##  3 Adela… SA    Other            0.746                  0.202                  2                    1   2.10e+0    95.1      43.4       -0.351       0.403  0.517   1.15 
+##  4 Adela… SA    Visiti…          0.435                  0.452                  1                    3   5.61e+1    34.6      71.4       -0.501       1.01   0.0684  0.294
+##  5 Adela… SA    Busine…          0.464                  0.179                  3                    0   1.03e-1     0.968    -3.22      -0.600       0.497  0.0709  0.134
+##  6 Adela… SA    Holiday          0.528                  0.296                  2                    1   1.77e-1    10.5      24.0       -0.481       0.350  0.131   0.313
+##  7 Adela… SA    Other            0.593                  0.404                  2                    2   4.44e-4     4.28      3.19      -0.298       0.281  0.261   0.330
+##  8 Adela… SA    Visiti…          0.488                  0.254                  0                    3   6.50e+0    34.2      -0.529     -0.472       0.446  0.139   0.117
+##  9 Alice… NT    Busine…          0.534                  0.251                  0                    1   1.69e-1    23.8      19.5       -0.492       0.548  0.217   0.367
+## 10 Alice… NT    Holiday          0.381                  0.832                  3                    1   7.39e-1   -19.6      10.5       -0.522       0.726 -0.00660 2.11 
+## # ℹ 294 more rows
+## # ℹ 37 more variables: diff1_acf1 &lt;dbl&gt;, diff1_acf10 &lt;dbl&gt;, diff2_acf1 &lt;dbl&gt;, diff2_acf10 &lt;dbl&gt;, season_acf1 &lt;dbl&gt;, pacf5 &lt;dbl&gt;, diff1_pacf5 &lt;dbl&gt;, diff2_pacf5 &lt;dbl&gt;,
+## #   season_pacf &lt;dbl&gt;, zero_run_mean &lt;dbl&gt;, nonzero_squared_cv &lt;dbl&gt;, zero_start_prop &lt;dbl&gt;, zero_end_prop &lt;dbl&gt;, lambda_guerrero &lt;dbl&gt;, kpss_stat &lt;dbl&gt;,
+## #   kpss_pvalue &lt;dbl&gt;, pp_stat &lt;dbl&gt;, pp_pvalue &lt;dbl&gt;, ndiffs &lt;int&gt;, nsdiffs &lt;int&gt;, bp_stat &lt;dbl&gt;, bp_pvalue &lt;dbl&gt;, lb_stat &lt;dbl&gt;, lb_pvalue &lt;dbl&gt;, var_tiled_var &lt;dbl&gt;,
+## #   var_tiled_mean &lt;dbl&gt;, shift_level_max &lt;dbl&gt;, shift_level_index &lt;dbl&gt;, shift_var_max &lt;dbl&gt;, shift_var_index &lt;dbl&gt;, shift_kl_max &lt;dbl&gt;, shift_kl_index &lt;dbl&gt;,
+## #   spectral_entropy &lt;dbl&gt;, n_crossing_points &lt;int&gt;, longest_flat_spot &lt;int&gt;, coef_hurst &lt;dbl&gt;, stat_arch_lm &lt;dbl&gt;</code></pre>
+<blockquote>
+<p>Provided the urca and fracdiff packages are installed, this gives 48 features for every combination of the three key variables (Region, State and Purpose). We can treat this tibble like any data set and analyse it to find interesting observations or groups of observations.</p>
+</blockquote>
+<div class="sourceCode" id="cb478"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb478-1"><a href="time-series-features.html#cb478-1" tabindex="-1"></a><span class="fu">library</span>(glue)</span>
+<span id="cb478-2"><a href="time-series-features.html#cb478-2" tabindex="-1"></a>tourism_features <span class="sc">|&gt;</span></span>
+<span id="cb478-3"><a href="time-series-features.html#cb478-3" tabindex="-1"></a>  <span class="fu">select_at</span>(<span class="fu">vars</span>(<span class="fu">contains</span>(<span class="st">&quot;season&quot;</span>), Purpose)) <span class="sc">|&gt;</span></span>
+<span id="cb478-4"><a href="time-series-features.html#cb478-4" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb478-5"><a href="time-series-features.html#cb478-5" tabindex="-1"></a>    <span class="at">seasonal_peak_year =</span> seasonal_peak_year <span class="sc">+</span></span>
+<span id="cb478-6"><a href="time-series-features.html#cb478-6" tabindex="-1"></a>      <span class="dv">4</span><span class="sc">*</span>(seasonal_peak_year<span class="sc">==</span><span class="dv">0</span>),</span>
+<span id="cb478-7"><a href="time-series-features.html#cb478-7" tabindex="-1"></a>    <span class="at">seasonal_trough_year =</span> seasonal_trough_year <span class="sc">+</span></span>
+<span id="cb478-8"><a href="time-series-features.html#cb478-8" tabindex="-1"></a>      <span class="dv">4</span><span class="sc">*</span>(seasonal_trough_year<span class="sc">==</span><span class="dv">0</span>),</span>
+<span id="cb478-9"><a href="time-series-features.html#cb478-9" tabindex="-1"></a>    <span class="at">seasonal_peak_year =</span> <span class="fu">glue</span>(<span class="st">&quot;Q{seasonal_peak_year}&quot;</span>),</span>
+<span id="cb478-10"><a href="time-series-features.html#cb478-10" tabindex="-1"></a>    <span class="at">seasonal_trough_year =</span> <span class="fu">glue</span>(<span class="st">&quot;Q{seasonal_trough_year}&quot;</span>),</span>
+<span id="cb478-11"><a href="time-series-features.html#cb478-11" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb478-12"><a href="time-series-features.html#cb478-12" tabindex="-1"></a>  GGally<span class="sc">::</span><span class="fu">ggpairs</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">colour =</span> Purpose))</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-14-1.png" width="672" /></p>
+<p>Using principal component method to reduce dimention and explore the variables.</p>
+<div class="sourceCode" id="cb479"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb479-1"><a href="time-series-features.html#cb479-1" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb479-2"><a href="time-series-features.html#cb479-2" tabindex="-1"></a>pcs <span class="ot">&lt;-</span> tourism_features <span class="sc">|&gt;</span></span>
+<span id="cb479-3"><a href="time-series-features.html#cb479-3" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>State, <span class="sc">-</span>Region, <span class="sc">-</span>Purpose) <span class="sc">|&gt;</span></span>
+<span id="cb479-4"><a href="time-series-features.html#cb479-4" tabindex="-1"></a>  <span class="fu">prcomp</span>(<span class="at">scale =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb479-5"><a href="time-series-features.html#cb479-5" tabindex="-1"></a>  <span class="fu">augment</span>(tourism_features)</span>
+<span id="cb479-6"><a href="time-series-features.html#cb479-6" tabindex="-1"></a>pcs <span class="sc">|&gt;</span></span>
+<span id="cb479-7"><a href="time-series-features.html#cb479-7" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> .fittedPC1, <span class="at">y =</span> .fittedPC2, <span class="at">col =</span> Purpose)) <span class="sc">+</span></span>
+<span id="cb479-8"><a href="time-series-features.html#cb479-8" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb479-9"><a href="time-series-features.html#cb479-9" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">aspect.ratio =</span> <span class="dv">1</span>)</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-15-1.png" width="672" /></p>
+<p>Explore outliers.</p>
+<div class="sourceCode" id="cb480"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb480-1"><a href="time-series-features.html#cb480-1" tabindex="-1"></a>outliers <span class="ot">&lt;-</span> pcs <span class="sc">|&gt;</span></span>
+<span id="cb480-2"><a href="time-series-features.html#cb480-2" tabindex="-1"></a>  <span class="fu">filter</span>(.fittedPC1 <span class="sc">&gt;</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb480-3"><a href="time-series-features.html#cb480-3" tabindex="-1"></a>  <span class="fu">select</span>(Region, State, Purpose, .fittedPC1, .fittedPC2)</span>
+<span id="cb480-4"><a href="time-series-features.html#cb480-4" tabindex="-1"></a>outliers</span></code></pre></div>
+<pre><code>## # A tibble: 4 × 5
+##   Region                 State Purpose  .fittedPC1 .fittedPC2
+##   &lt;chr&gt;                  &lt;chr&gt; &lt;chr&gt;         &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Australia&#39;s North West WA    Business       13.4    -11.3  
+## 2 Australia&#39;s South West WA    Holiday        10.9      0.880
+## 3 Melbourne              VIC   Holiday        12.3    -10.4  
+## 4 South Coast            NSW   Holiday        11.9      9.42</code></pre>
+<div class="sourceCode" id="cb482"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb482-1"><a href="time-series-features.html#cb482-1" tabindex="-1"></a>outliers <span class="sc">|&gt;</span></span>
+<span id="cb482-2"><a href="time-series-features.html#cb482-2" tabindex="-1"></a>  <span class="fu">left_join</span>(tourism, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;State&quot;</span>, <span class="st">&quot;Region&quot;</span>, <span class="st">&quot;Purpose&quot;</span>), <span class="at">multiple =</span> <span class="st">&quot;all&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb482-3"><a href="time-series-features.html#cb482-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Series =</span> <span class="fu">glue</span>(<span class="st">&quot;{State}&quot;</span>, <span class="st">&quot;{Region}&quot;</span>, <span class="st">&quot;{Purpose}&quot;</span>, <span class="at">.sep =</span> <span class="st">&quot;</span><span class="sc">\n\n</span><span class="st">&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb482-4"><a href="time-series-features.html#cb482-4" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Quarter, <span class="at">y =</span> Trips)) <span class="sc">+</span></span>
+<span id="cb482-5"><a href="time-series-features.html#cb482-5" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb482-6"><a href="time-series-features.html#cb482-6" tabindex="-1"></a>  <span class="fu">facet_grid</span>(Series <span class="sc">~</span> ., <span class="at">scales =</span> <span class="st">&quot;free&quot;</span>) <span class="sc">+</span></span>
+<span id="cb482-7"><a href="time-series-features.html#cb482-7" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Outlying time series in PC space&quot;</span>)</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-17-1.png" width="672" /></p>
+</div>
+<div id="exercises" class="section level2 hasAnchor" number="4.3">
+<h2><span class="header-section-number">4.3</span> Exercises<a href="time-series-features.html#exercises" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ol style="list-style-type: decimal">
+<li></li>
+</ol>
+<div class="sourceCode" id="cb483"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb483-1"><a href="time-series-features.html#cb483-1" tabindex="-1"></a>?PBS</span>
+<span id="cb483-2"><a href="time-series-features.html#cb483-2" tabindex="-1"></a></span>
+<span id="cb483-3"><a href="time-series-features.html#cb483-3" tabindex="-1"></a>mean_sd <span class="ot">&lt;-</span> <span class="cf">function</span>(x){</span>
+<span id="cb483-4"><a href="time-series-features.html#cb483-4" tabindex="-1"></a>  <span class="fu">c</span>(<span class="at">mean=</span><span class="fu">mean</span>(x), <span class="at">sd =</span> <span class="fu">sd</span>(x))</span>
+<span id="cb483-5"><a href="time-series-features.html#cb483-5" tabindex="-1"></a>}</span>
+<span id="cb483-6"><a href="time-series-features.html#cb483-6" tabindex="-1"></a></span>
+<span id="cb483-7"><a href="time-series-features.html#cb483-7" tabindex="-1"></a>PBS <span class="sc">|&gt;</span></span>
+<span id="cb483-8"><a href="time-series-features.html#cb483-8" tabindex="-1"></a>  <span class="fu">features</span>(Cost, mean_sd) <span class="sc">|&gt;</span></span>
+<span id="cb483-9"><a href="time-series-features.html#cb483-9" tabindex="-1"></a>  <span class="fu">filter</span>(mean <span class="sc">==</span> <span class="fu">max</span>(mean)) <span class="sc">|&gt;</span></span>
+<span id="cb483-10"><a href="time-series-features.html#cb483-10" tabindex="-1"></a>  <span class="fu">left_join</span>(PBS, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&#39;Concession&#39;</span>, <span class="st">&#39;Type&#39;</span>, <span class="st">&#39;ATC1&#39;</span>, <span class="st">&#39;ATC2&#39;</span>), <span class="at">multiple =</span> <span class="st">&quot;all&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb483-11"><a href="time-series-features.html#cb483-11" tabindex="-1"></a>  <span class="fu">as_tsibble</span>(<span class="at">index =</span> Month, <span class="at">key =</span> <span class="fu">c</span>(<span class="st">&#39;Concession&#39;</span>, <span class="st">&#39;Type&#39;</span>, <span class="st">&#39;ATC1&#39;</span>, <span class="st">&#39;ATC2&#39;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb483-12"><a href="time-series-features.html#cb483-12" tabindex="-1"></a>  <span class="fu">autoplot</span>(Cost) <span class="sc">+</span></span>
+<span id="cb483-13"><a href="time-series-features.html#cb483-13" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&#39;Time series with the highest mean&#39;</span>)</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-18-1.png" width="672" /></p>
+<ol start="2" style="list-style-type: decimal">
+<li></li>
+</ol>
+<div class="sourceCode" id="cb484"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb484-1"><a href="time-series-features.html#cb484-1" tabindex="-1"></a>tourism <span class="sc">|&gt;</span></span>
+<span id="cb484-2"><a href="time-series-features.html#cb484-2" tabindex="-1"></a>  <span class="fu">filter</span>(Purpose <span class="sc">==</span> <span class="st">&#39;Holiday&#39;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb484-3"><a href="time-series-features.html#cb484-3" tabindex="-1"></a>  <span class="fu">features</span>(Trips, <span class="fu">feature_set</span>(<span class="at">pkgs =</span> <span class="st">&quot;feasts&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb484-4"><a href="time-series-features.html#cb484-4" tabindex="-1"></a>  <span class="fu">select_at</span>(<span class="fu">vars</span>(<span class="fu">contains</span>(<span class="st">&quot;season&quot;</span>), State)) <span class="sc">|&gt;</span></span>
+<span id="cb484-5"><a href="time-series-features.html#cb484-5" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb484-6"><a href="time-series-features.html#cb484-6" tabindex="-1"></a>    <span class="at">seasonal_peak_year =</span> seasonal_peak_year <span class="sc">+</span></span>
+<span id="cb484-7"><a href="time-series-features.html#cb484-7" tabindex="-1"></a>      <span class="dv">4</span><span class="sc">*</span>(seasonal_peak_year<span class="sc">==</span><span class="dv">0</span>),</span>
+<span id="cb484-8"><a href="time-series-features.html#cb484-8" tabindex="-1"></a>    <span class="at">seasonal_trough_year =</span> seasonal_trough_year <span class="sc">+</span></span>
+<span id="cb484-9"><a href="time-series-features.html#cb484-9" tabindex="-1"></a>      <span class="dv">4</span><span class="sc">*</span>(seasonal_trough_year<span class="sc">==</span><span class="dv">0</span>),</span>
+<span id="cb484-10"><a href="time-series-features.html#cb484-10" tabindex="-1"></a>    <span class="at">seasonal_peak_year =</span> <span class="fu">glue</span>(<span class="st">&quot;Q{seasonal_peak_year}&quot;</span>),</span>
+<span id="cb484-11"><a href="time-series-features.html#cb484-11" tabindex="-1"></a>    <span class="at">seasonal_trough_year =</span> <span class="fu">glue</span>(<span class="st">&quot;Q{seasonal_trough_year}&quot;</span>),</span>
+<span id="cb484-12"><a href="time-series-features.html#cb484-12" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb484-13"><a href="time-series-features.html#cb484-13" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb484-14"><a href="time-series-features.html#cb484-14" tabindex="-1"></a>    <span class="at">seasonal_peak_year =</span> <span class="fu">as.factor</span>(seasonal_peak_year),</span>
+<span id="cb484-15"><a href="time-series-features.html#cb484-15" tabindex="-1"></a>    <span class="at">seasonal_trough_year =</span> <span class="fu">as.factor</span>(seasonal_trough_year)</span>
+<span id="cb484-16"><a href="time-series-features.html#cb484-16" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb484-17"><a href="time-series-features.html#cb484-17" tabindex="-1"></a>  GGally<span class="sc">::</span><span class="fu">ggpairs</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">colour =</span> State),</span>
+<span id="cb484-18"><a href="time-series-features.html#cb484-18" tabindex="-1"></a>                  <span class="at">columns =</span> <span class="fu">c</span>(<span class="st">&quot;seasonal_peak_year&quot;</span>, </span>
+<span id="cb484-19"><a href="time-series-features.html#cb484-19" tabindex="-1"></a>                              <span class="st">&quot;seasonal_trough_year&quot;</span>, </span>
+<span id="cb484-20"><a href="time-series-features.html#cb484-20" tabindex="-1"></a>                              <span class="st">&quot;seasonal_strength_year&quot;</span>, </span>
+<span id="cb484-21"><a href="time-series-features.html#cb484-21" tabindex="-1"></a>                              <span class="st">&quot;State&quot;</span>))</span></code></pre></div>
+<p><img src="figure_html/ch04-ts-features-19-1.png" width="672" /></p>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="time-series-decomposition.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="the-forecasters-toolbox.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": false,
+"twitter": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": false
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": null,
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "lunr",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+},
+"toolbar": {
+"position": "fixed"
+},
+"info": false
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

@@ -1,0 +1,356 @@
+# Dynamic regression models
+
+[The source of the chapter](https://otexts.com/fpp3/dynamic.html)
+
+```{r ch10-ts-dynamic-1}
+
+# loading libraries
+library(tsibble)
+library(tsibbledata)
+library(tidyverse)
+# to read data
+library(rio)
+library(ggplot2)
+library(fabletools)
+library(feasts)
+library(fpp3)
+library(latex2exp)
+library(forecast)
+
+```
+
+
+## Regression with ARIMA errors using `fable`
+
+[The source of the section](https://otexts.com/fpp3/regarima.html)
+
+To fit a regression model with ARIMA errors, the `pdq()` specifies the order of the ARIMA errors model.
+
+> If differencing is specifies, then the differencing is applied __to all variables__ in the regression model. Use `ARIMA(y ~ x + pdq(1,1,0))` to apply dirfferencing to all variables.
+
+The constant disappears due to the differencing. Add 1 to include the constant.
+
+### Example: US Personal Consumption and Income
+
+```{r ch10-ts-dynamic-2}
+
+us_change |>
+  pivot_longer(c(Consumption, Income),
+               names_to = 'var', values_to = 'value') |>
+  autoplot(value) +
+  facet_grid(var ~ ., scales = 'free_y') +
+  labs(title = "US consumption and personal income",
+       y = "Quarterly % change") +
+    theme(legend.position ='none')
+
+```
+
+```{r ch10-ts-dynamic-3}
+
+fit <- us_change |>
+  model(ARIMA(Consumption ~ Income))
+
+fit |> report()
+
+```
+
+```{r ch10-ts-dynamic-4}
+
+bind_rows(
+    `Regression residuals` =
+        as_tibble(residuals(fit, type = "regression")),
+    `ARIMA residuals` =
+        as_tibble(residuals(fit, type = "innovation")),
+    .id = "type"
+  ) |>
+  mutate(
+    type = factor(type, levels=c(
+      "Regression residuals", "ARIMA residuals"))
+  ) |>
+  ggplot(aes(x = Quarter, y = .resid)) +
+  geom_line() +
+  facet_grid(vars(type))
+
+```
+
+```{r ch10-ts-dynamic-5}
+
+fit |> gg_tsresiduals()
+
+```
+
+```{r ch10-ts-dynamic-6}
+
+augment(fit) |>
+  features(.innov, ljung_box, dof = 3, lag = 8)
+
+```
+
+We cannot reject $H_0$, so there is no autocorrelation in the residuals.
+
+
+## Forecasting
+
+[The source of the section](https://otexts.com/fpp3/forecasting.html)
+
+> To forecast using a regression model with ARIMA errors, we need to forecast the regression part of the model and the ARIMA part of the model, and combine the results. When the predictors are themselves unknown, we must either model them separately, or use assumed future values for each predictor.
+
+
+### Example: US Personal Consumption and Income
+
+```{r ch10-ts-dynamic-7}
+
+us_change_future <- new_data(us_change, 8) |>
+  mutate(Income = mean(us_change$Income))
+
+fit |> 
+  forecast(new_data = us_change_future) |>
+  autoplot(us_change) +
+  labs(y = "Percentage change")
+
+```
+
+### Example: Forecasting electricity demand
+
+```{r ch10-ts-dynamic-8}
+
+vic_elec_daily <- vic_elec |>
+  filter(year(Time) == 2014) |>
+  index_by(Date = date(Time)) |>
+  summarise(
+    Demand = sum(Demand) / 1e3,
+    Temperature = max(Temperature),
+    Holiday = any(Holiday)
+  ) |>
+  mutate(Day_Type = case_when(
+    Holiday ~ "Holiday",
+    wday(Date) %in% 2:6 ~ "Weekday",
+    TRUE ~ "Weekend"
+  ))
+
+vic_elec_daily |>
+  ggplot(aes(x = Temperature, y = Demand, colour = Day_Type)) +
+  geom_point() +
+  labs(y = "Electricity demand (GW)",
+       x = "Maximum daily temperature")
+
+```
+
+```{r ch10-ts-dynamic-9}
+
+vic_elec_daily |>
+  pivot_longer(c(Demand, Temperature)) |>
+  ggplot(aes(x = Date, y = value)) +
+  geom_line() +
+  facet_grid(name ~ ., scales = "free_y") + ylab("")
+
+```
+
+```{r ch10-ts-dynamic-10}
+
+fit <- vic_elec_daily |>
+  model(ARIMA(Demand ~ Temperature + I(Temperature^2) +
+                (Day_Type == "Weekday")))
+fit |> gg_tsresiduals()
+
+```
+
+```{r ch10-ts-dynamic-11}
+
+# dof = p + q + P + Q = 2 + 2 + 2 + 0
+
+augment(fit) |>
+  features(.innov, ljung_box, dof = 6, lag = 14)
+
+```
+
+```{r ch10-ts-dynamic-12}
+
+vic_elec_future <- new_data(vic_elec_daily, 14) |>
+  mutate(
+    Temperature = 26,
+    Holiday = c(TRUE, rep(FALSE, 13)),
+    Day_Type = case_when(
+      Holiday ~ "Holiday",
+      wday(Date) %in% 2:6 ~ "Weekday",
+      TRUE ~ "Weekend"
+    )
+  )
+forecast(fit, vic_elec_future) |>
+  autoplot(vic_elec_daily) +
+  labs(title="Daily electricity demand: Victoria",
+       y="GW")
+
+```
+
+##  Stochastic and deterministic trends
+
+[The source of the section](https://otexts.com/fpp3/stochastic-and-deterministic-trends.html)
+
+
+### Example: Air transport passengers Australia
+
+```{r ch10-ts-dynamic-13}
+
+aus_airpassengers |>
+  autoplot(Passengers) +
+  labs(y = 'Passengers (millions)',
+       title = 'Total annual air passengers')
+
+```
+
+
+1. The deterministic trend model
+
+```{r ch10-ts-dynamic-14}
+
+fit_deterministic <- aus_airpassengers |>
+  model(deterministic = ARIMA(Passengers ~ 1 + trend() + pdq(d = 0)))
+
+fit_deterministic |> report()
+
+```
+2. The stochastic trend model
+
+```{r ch10-ts-dynamic-15}
+
+fit_stochastic <- aus_airpassengers |>
+  model(stochastic = ARIMA(Passengers ~ pdq(d = 1)))
+
+fit_stochastic |> report()
+
+```
+
+```{r ch10-ts-dynamic-16}
+
+aus_airpassengers |>
+  autoplot(Passengers) +
+  autolayer(fit_stochastic |> forecast(h = 20),
+    colour = "#0072B2", level = 95) +
+  autolayer(fit_deterministic |> forecast(h = 20),
+    colour = "#D55E00", alpha = 0.65, level = 95) +
+  labs(y = "Air passengers (millions)",
+       title = "Forecasts from trend models")
+
+```
+
++ The slope of the deterministic trend is not going to change over time. 
++ It is safer to forecast with stochastic trends, especially for longer forecast horizons, as the prediction intervals allow for greater uncertainty in future growth.
+
+
+## Dynamic harmonic regression
+
+[The source of the section](https://otexts.com/fpp3/dhr.html)
+
+The dynamic regression with Fourier terms is often better for long seasonal periods.
+
+The `ARIMA()` function is allow a seasonal period up to $m=350$.
+
+The harmonic regression allows:
+
++ any length seasonality
++ Fourier terms of different frequencies can be used for data with more than one seasonal period
++ $K$ param controls the smoothness of the seasonal pattern. It is the number of Fourier sin and cos pairs. The smaller $K$ is, the smoother the seasonal pattern is.
+
+The seasonality has to have fixed pattern over time.
+
+## Example: Australian eating out expenditure
+
+```{r ch10-ts-dynamic-17}
+
+aus_cafe <- aus_retail |>
+  filter(
+    Industry == "Cafes, restaurants and takeaway food services",
+    year(Month) %in% 2004:2018
+  ) |>
+  summarise(Turnover = sum(Turnover))
+
+fit <- model(aus_cafe,
+  `K = 1` = ARIMA(log(Turnover) ~ fourier(K=1) + PDQ(0,0,0)),
+  `K = 2` = ARIMA(log(Turnover) ~ fourier(K=2) + PDQ(0,0,0)),
+  `K = 3` = ARIMA(log(Turnover) ~ fourier(K=3) + PDQ(0,0,0)),
+  `K = 4` = ARIMA(log(Turnover) ~ fourier(K=4) + PDQ(0,0,0)),
+  `K = 5` = ARIMA(log(Turnover) ~ fourier(K=5) + PDQ(0,0,0)),
+  `K = 6` = ARIMA(log(Turnover) ~ fourier(K=6) + PDQ(0,0,0)),
+)
+
+fit |>
+  forecast(h = "2 years") |>
+  autoplot(aus_cafe, level = 95) +
+  facet_wrap(vars(.model), ncol = 2) +
+  guides(colour = "none", fill = "none", level = "none") +
+  geom_label(
+    aes(x = yearmonth("2007 Jan"), y = 4250,
+        label = paste0("AICc = ", format(AICc))),
+    data = glance(fit)
+  ) +
+  labs(title= "Total monthly eating-out expenditure",
+       y="$ billions")
+
+```
+
+
+##  Lagged predictors
+
+[The source of the section](https://otexts.com/fpp3/lagged-predictors.html)
+
+
+### Example: TV advertising and insurance quotations
+
+```{r ch10-ts-dynamic-18}
+
+insurance |>
+  pivot_longer(Quotes:TVadverts) |>
+  ggplot(aes(x = Month, y = value)) +
+  geom_line() +
+  facet_grid(vars(name), scales = "free_y") +
+  labs(y = "", title = "Insurance advertising and quotations")
+
+```
+
+```{r ch10-ts-dynamic-19}
+
+fit <- insurance |>
+  # Restrict data so models use same fitting period
+  mutate(Quotes = c(NA, NA, NA, Quotes[4:40])) |>
+  # Estimate models
+  model(
+    lag0 = ARIMA(Quotes ~ pdq(d = 0) + TVadverts),
+    lag1 = ARIMA(Quotes ~ pdq(d = 0) +
+                 TVadverts + lag(TVadverts)),
+    lag2 = ARIMA(Quotes ~ pdq(d = 0) +
+                 TVadverts + lag(TVadverts) +
+                 lag(TVadverts, 2)),
+    lag3 = ARIMA(Quotes ~ pdq(d = 0) +
+                 TVadverts + lag(TVadverts) +
+                 lag(TVadverts, 2) + lag(TVadverts, 3))
+  )
+
+fit |> glance()
+
+```
+
+```{r ch10-ts-dynamic-20}
+
+fit_best <- insurance |>
+  model(ARIMA(Quotes ~ pdq(d = 0) +
+              TVadverts + lag(TVadverts)))
+report(fit_best)
+
+```
+```{r ch10-ts-dynamic-21}
+
+insurance_future <- new_data(insurance, 20) |>
+  mutate(TVadverts = 8)
+fit_best |>
+  forecast(insurance_future) |>
+  autoplot(insurance) +
+  labs(
+    y = "Quotes",
+    title = "Forecast quotes with future advertising set to 8"
+  )
+
+```
+
+
+

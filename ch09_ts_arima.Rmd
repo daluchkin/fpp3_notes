@@ -1,0 +1,1974 @@
+# ARIMA models
+
+[The source of the chapter](https://otexts.com/fpp3/arima.html)
+
+```{r ch09-ts-arima-1}
+
+# loading libraries
+library(tsibble)
+library(tsibbledata)
+library(tidyverse)
+# to read data
+library(rio)
+library(ggplot2)
+library(fabletools)
+library(feasts)
+library(fpp3)
+library(latex2exp)
+library(forecast)
+
+```
+
+## Stationarity and differencing
+
+[The source of the section](https://otexts.com/fpp3/stationarity.html)
+
+A stationary series is:
+
+-   Roughly horizontal =\> no trend
+-   Constant variance
+-   No patterns predictable in the long-term =\> no seasonality
+
+![](https://otexts.com/fpp3/fpp_files/figure-html/stationary-1.png)
+
+a.  Non-stationary: trend
+b.  **Stationary**
+c.  Non-stationary: trend
+d.  Non-stationary: seasonality
+e.  Non-stationary: trend
+f.  Non-stationary: trend
+g.  **Stationary**, cycling
+h.  Non-stationary: seasonality
+i.  Non-stationary: seasonality, trend, increasing variance
+
+So stationary series has no predictable patters in the long-term.
+
+-   Transformation helps to stabilize the variance
+-   For ARIMA modelling, we also need to stabilize the mean
+
+Identifying non-stationary series:
+
+1.  Time plot
+2.  The ACF of stationary data drops to zero relatively quickly.
+3.  The ACF of non-stationary data decreases slowly.
+4.  For non-stationary data, the value of $r_1$ is often large and positive.
+
+### Differencing
+
+Observe a plot.
+
+```{r ch09-ts-arima-2}
+
+google_2018 <- gafa_stock |>
+  filter(Symbol == 'GOOG', year(Date) == 2018)
+
+google_2018 |>
+  autoplot(Close) +
+  labs(y = 'Closing stock price ($USD)', title = 'Google closing stock price')
+
+```
+
+Observe an ACF.
+
+```{r ch09-ts-arima-3}
+
+google_2018 |>
+  ACF(Close) |>
+  autoplot() +
+  labs(title = 'ACF', subtitle = "Google closing stock price")
+
+```
+
+**Observations:**
+
+-   Slow decreasing
+
+-   Large and positive ACF at the first lag.
+
+Observe an ACF of the differenced data.
+
+```{r ch09-ts-arima-4}
+
+google_2018 |>
+  mutate(close_diff = difference(Close)) |>
+  autoplot(close_diff) +
+  labs(subtitle = 'Change in google closing stock price ($USD)')
+
+```
+
+```{r ch09-ts-arima-5}
+
+google_2018 |>
+  mutate(close_diff = difference(Close)) |>
+  ACF(close_diff) |>
+  autoplot() + labs(subtitle = "Changes in Google closing stock price")
+
+```
+
+> Transformations such as logarithms can help to stabilise the variance of a time series. Differencing can help stabilise the mean of a time series by removing changes in the level of a time series, and therefore eliminating (or reducing) trend and seasonality.
+
+> For a stationary time series, the ACF will drop to zero relatively quickly, while the ACF of non-stationary data decreases slowly.
+
+The formal test to check data stationarity:\
+
+Ljung-Box test: + **H0**: There is **no autocorrelation** in the time series data at the specified lags. + **H1**: There is **autocorrelation** in the time series data at the specified lags. This means that some autocorrelation exists, indicating that the residuals are not independent.
+
+```{r ch09-ts-arima-6}
+
+google_2015 |>
+  mutate(diff_close = difference(Close)) |>
+  features(diff_close, ljung_box, lag = 10)
+
+```
+
+$p$-value = 0.6, we are fail to reject $H_0$.
+
+Differencing:
+
+-   Differencing helps to stabilize the mean
+-   The differenced series is the change between each observation in the original series: $y'_t = y_t - y_{t-1}$
+-   The4 differenced series will have only $T-1$ values since it is not possible to calculate a difference $y'_1$ for the first observation
+
+### Second-order differencing
+
+-   Occasionally the differenced data will not appear stationaty and it may be necessary to difference the data second time:
+
+$$
+y''_t = y'_t - y'_{t-1} = (y_t - y_{t-1}) - (y_{t-1} - y_{t-2}) = y_t - 2y_{t-1} + y_{t-2}
+$$
+
+### Seasonal differencing
+
+-   A seasonal differencing is the differencing between an observation and the corresponding observation from the previous period.
+
+$$
+y'_t = y_t - y_{t-m}
+$$
+
+where $m$ is a number of seasons.
+
+-   For monthly data $m$ = 12
+-   For quarterly data $m$ = 4
+-   Seasonal differenced series will have $T-m$ observations.
+
+```{r ch09-ts-arima-7}
+
+a10 <- PBS |>
+  filter(ATC2 == 'A10') |>
+  summarise(Cost = sum(Cost) / 1e6)
+
+a10 |>
+  autoplot(Cost)
+
+```
+
+-   The series is non-stationary
+-   The variance is changing, it is lower at the earlier observations and higher at the last ones.
+
+Apply log transformation to stabilize the variance:
+
+```{r ch09-ts-arima-8}
+
+a10 |>
+  autoplot(log(Cost))
+
+```
+
+Deal with the seasonal component:
+
+```{r ch09-ts-arima-9}
+
+a10 |>
+  autoplot(log(Cost) |> difference(12))
+
+```
+
+It is possibly stationary. Apply formal tests.
+
+```{r ch09-ts-arima-10}
+
+a10 |>
+  rename(`Sales ($ million)` = Cost) |>
+  mutate(`Log Sales` = log(`Sales ($ million)`), 
+         `Annual change in log sales` = difference(`Log Sales`, 12)) |>
+  pivot_longer(cols = c(`Sales ($ million)`, 
+                        `Log Sales`,
+                        `Annual change in log sales`)) |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y') +
+  labs(title = 'Antidiabetic drug sales')
+
+```
+
+> Sometimes it is necessary to take both a seasonal difference and a first difference to obtain stationary data.
+
+```{r ch09-ts-arima-11}
+
+h02 <- PBS |>
+  filter(ATC2 == 'H02') |>
+  summarise(Cost = sum(Cost) / 1e6) |>
+  rename(`Sales ($million)` = Cost)
+
+h02 |>
+  autoplot(`Sales ($million)`) +
+  labs(title = 'Corticosteroid drug sales', subtitle = 'Raw data')
+
+```
+
+-   Data is non-stationary
+-   The variance is unstable during the series.
+
+Transform the data to stabilize the variance.
+
+```{r ch09-ts-arima-12}
+
+h02 <- h02 |>
+  mutate(`Log Sales` = log(`Sales ($million)`))
+
+h02 |>
+  autoplot(`Log Sales`) +
+  labs(title = 'Corticosteroid drug sales', subtitle = 'Log Sales data')
+
+```
+
+-   The variance is stable
+-   There is strong seasonality in the series
+
+Apply seasonal differencing to the logged data.
+
+```{r ch09-ts-arima-13}
+
+frequency(h02)
+
+```
+
+```{r ch09-ts-arima-14}
+
+h02 <- h02 |>
+  mutate(`Annual change in log Sales` = difference(`Log Sales`, 12))
+
+h02 |>
+  autoplot(`Annual change in log Sales`) +
+  labs(title = 'Corticosteroid drug sales', subtitle = 'Annual change in log Sales')
+
+```
+
+-   Seasonal differenced data is closer to being stationary
+-   Remaining non-stationarity can be removed with further first difference
+
+Apply the first difference to the annual change.
+
+```{r ch09-ts-arima-15}
+
+h02 <- h02 |>
+  mutate(`Doubly differenced log Sales` = difference(`Annual change in log Sales`, 1))
+
+h02 |>
+  autoplot(`Doubly differenced log Sales`) +
+  labs(title = 'Corticosteroid drug sales', subtitle = 'Doubly differenced log Sales')
+
+```
+
+### Unit root tests
+
+These are statistical hypothesis tests of stationarity that are designed for determining whether differencing is required.
+
+1.  Augment Dickey Fuller test:
+    -   $H_0$: The data are non-stationary
+    -   $H_A$: The data are stationary
+2.  Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test:
+    -   $H_0$: The data are stationary
+    -   $H_A$: The data are non-stationary
+
+If $p$-value is less than 0.05 in KPSS test, it suggests that differencing is required.
+
+```{r ch09-ts-arima-16}
+
+google_2015 |>
+  features(Close, unitroot_kpss)
+
+```
+
+$p$-value = 0.01 =\> $H_0$ is rejected and the data are not stationary.
+
+```{r ch09-ts-arima-17}
+
+google_2015 |>
+  mutate(diff_close = difference(Close)) |>
+  features(diff_close, unitroot_kpss)
+
+```
+
+The differenced data are stationary now.
+
+```{r ch09-ts-arima-18}
+
+google_2015 |>
+  features(Close, unitroot_ndiffs)
+
+```
+
+One difference is required to make the `google_2015` data stationary.
+
+To determine whether seasonal differencing is required use `unitroot_ns`. No seasonal differences are suggested if $F_S < 0.64$, otherwise one seasonal difference is suggested.
+
+```{r ch09-ts-arima-19}
+
+aus_total_retail <- aus_retail |>
+  summarise(Turnover = sum(Turnover))
+
+aus_total_retail |>
+  mutate(log_turnover = log(Turnover)) |>
+  features(log_turnover, unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-20}
+
+aus_total_retail |>
+  mutate(log_turnover = difference(log(Turnover), 12)) |>
+  features(log_turnover, unitroot_ndiffs)
+
+```
+
+## Backshift notation
+
+[The source of the section](https://otexts.com/fpp3/backshift.html)
+
+Shifting the data back **one** period:
+
+$$
+By_t = y_{t-1}
+$$
+
+Shifting the data back **two** periods:
+
+$$
+B(By_t) = B^2y_t = y_{t-1}
+$$ Shifting the data back $m$ periods:
+
+$$
+B^my_t = y_{t-m}
+$$
+
+A first difference:
+
+$$
+y'_t = y_t - y_{t-1} = y_t - By_t = (1-B)y_t
+$$
+
+Second-order differences:
+
+$$
+y''_t = (y_t - y_{t-1}) - (y_{t-1} - t_{t-2}) = y_t - y_{t-1} - y_{t-1} + y_{t-2} = y_t - 2y_{t-1} + y_{t-2} = (1-2B + B^2)y_t = (1-B)^2y_t
+$$ $d$th-order difference:
+
+$$
+(1 - B)^dy_t
+$$ A seasonal difference followed by a first difference:
+
+$$
+(1-B)(1-B^m)y_t = (1-B-B^m+B^{m+1})y_t = y_t - y_{t-1} - y_{t-m} + y_{t-m-1}
+$$
+
+## Autoregressive (AR) models
+
+[The source of the section](https://otexts.com/fpp3/AR.html)
+
+In an autoregression model a linear combionation of past values of the variable are used.
+
+Autoregression model **AR(p)** of order $p$:
+
+$$
+y_t = c + \phi_1y_{t-1} + \phi_2y_{t-2} +...+\phi_ty_{t-p} + \varepsilon_t
+$$
+
+### AR(1) model
+
+An autoregressive model of order 1.
+
+$$
+y_t = c + \phi_1y_{t-1} + \varepsilon_t
+$$
+
+-   When $\phi_1 = 0$, $y_t$ is equivalent to a white noise: $y_t = \varepsilon_t$
+-   When $\phi_1 = 1$ and $c = 0$, $y_t$ is equivalent to a random walk: $y_t = y_{t-1} + \varepsilon_t$
+-   When $\phi_1 = 1$ and $c \ne 0$, $y_t$ is equivalent to a random walk with drift: $y_t = c + y_{t-1} + \varepsilon_t$
+-   Constraints: $-1 < \phi_1 < 1$, the closer $\phi_1$ is to the bounds the more the process wanders above or below it's unconditional mean
+-   When $\phi < 0$, $y_t$ tends to oscillate around the mean.
+-   $c$ is related to the mean of $y_t$
+-   $\mathbb E(y_t) = \mu$
+-   $\mu = c + \phi_1\mu$
+-   $\mu = \frac c {1-\phi_1}$
+-   AR(1): ARIMA(1, 0, 0)
+
+### AR(2) model
+
+Constraints:
+
+-   $-1 < \phi_2 < 1, \phi_1+\phi_2 < 1, \phi_2 - \phi_1 < 1$
+
+```{r ch09-ts-arima-21}
+
+ar_processes <- tibble(
+  n = 1:100,
+  # y_t = 18 - 0.8 * y_t-1 + epsilon_t
+  ar1 = arima.sim(n = 100, 
+                  model = list(ar = -0.8)) + 18,
+  # y_t = 8 + 1.3 * y_t-1 - 0.7 * y_t-2 + epsilon_t
+  ar2 = arima.sim(n = 100, 
+                  model = list(ar = c(1.3, -0.7)))) |>
+  as_tsibble(index = n)
+
+ar_processes |>
+  pivot_longer(cols = c(ar1, ar2)) |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+  
+
+```
+
+```{r ch09-ts-arima-22}
+
+ar_processes |>
+  gg_tsdisplay(ar1, plot_type = 'partial') 
+
+```
+
+```{r ch09-ts-arima-23}
+
+ar_processes |>
+  gg_tsdisplay(ar2, plot_type = 'partial') 
+
+```
+
+## Moving average models
+
+[The source of the section](https://otexts.com/fpp3/MA.html)
+
+A moving average model MA(q) uses past forecast errors in a regression-like model.
+
+$$
+y_t = c + \varepsilon_t + \theta_1\varepsilon_{t-1}+ \theta_2\varepsilon_{t-2} +...+ \theta_q\varepsilon_{t-q}
+$$
+
+```{r ch09-ts-arima-24}
+
+ma_processes <- tibble(
+  n = 1:100,
+  # y_t = 20 + epsilon_t + 0.8 * epsilon_t-1
+  ma1 = arima.sim(n = 100, 
+                  model = list(ma = 0.8)) + 20,
+  # y_t = epsilon_t - epsilon_t-1 + 0.8 * epsilon_t-2
+  ma2 = arima.sim(n = 100, 
+                  model = list(ma = c(-1, 0.8)))) |>
+  as_tsibble(index = n)
+
+ma_processes |>
+  pivot_longer(cols = c(ma1, ma2)) |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+  
+
+```
+
+```{r ch09-ts-arima-25}
+
+ma_processes |>
+  gg_tsdisplay(ma1, plot_type = 'partial') 
+
+```
+
+```{r ch09-ts-arima-26}
+
+ma_processes |>
+  gg_tsdisplay(ma2, plot_type = 'partial') 
+
+```
+
+## Non-seasonal ARIMA models
+
+[The source of the section](https://otexts.com/fpp3/non-seasonal-arima.html)
+
+A non-seasonal ARIMA model (AutoRegressive Integrated Moving Average) can be written as
+
+$$
+y'_t = c + \phi_1y'_{t-1} +...+\phi_py'_{t-p} + \theta_1\varepsilon_{t-1}+...+\theta_q\varepsilon_{t-q} + \varepsilon_t
+$$ where $y'_t$ is the differenced series and is called an $ARIMA(p, d, q)$ model where
+
+-   $p$ = order of autoregressive part
+-   $d$ = degree of first differencing involved
+-   $q$ = order of the moving average part
+
+Special cases of ARIMA models:
+
+-   **White noise**: ARIMA(0,0,0) with no constant
+-   **Random walk**: ARIMA(0,**1**,0) with **no constant**
+-   **Random walk with drift**: ARIMA(0,**1**,0) with **a constant**
+-   **Autoregression**: ARIMA(**p**,0,0)
+-   **Moving average**: ARIMA(0,0,**q**)
+
+### Example: Egyptian exports
+
+```{r ch09-ts-arima-27}
+
+global_economy |>
+  filter(Code == 'EGY') |>
+  autoplot(Exports) +
+  labs(y = '% of GDP', title = 'Egyptian exports')
+
+```
+
+```{r ch09-ts-arima-28}
+
+global_economy |>
+  filter(Code == 'EGY') |>
+  gg_tsdisplay(Exports, plot_type = 'partial') +
+  labs(y = '% of GDP', title = 'Egyptian exports')
+
+```
+
+Find the best model.
+
+```{r ch09-ts-arima-29}
+
+global_economy |>
+  filter(Code == 'EGY') |>
+  model(auto = ARIMA(Exports)) |>
+  report()
+
+```
+
+```{r ch09-ts-arima-30}
+
+global_economy |>
+  filter(Code == 'EGY') |>
+  model(auto = ARIMA(Exports)) |>
+  forecast(h = 10) |>
+  autoplot(global_economy) +
+  labs(title = 'ARIMA(2,0,1) model forecast of Egyptian exports', y = '% of GDP')
+  
+
+```
+
+### ACF and PACF plots
+
+Using ACF and PACF plots to determine the initial values of $p$ and $q$.
+
+```{r ch09-ts-arima-31}
+
+global_economy |>
+  filter(Code == "EGY") |>
+  ACF(Exports) |>
+  autoplot()
+
+```
+
+```{r ch09-ts-arima-32}
+
+global_economy |>
+  filter(Code == "EGY") |>
+  PACF(Exports) |>
+  autoplot()
+
+```
+
+Interpretation of ACF and PACF to find initial $p$ and $q$ values:
+
+-   The data might follow an $ARIMA(p, d, 0)$ if:
+    -   the ACF demonstrates exponentially decaying of sinusoidal
+    -   the PACF demonstrates a significant spike at lag $p$ abd none beyond lag $p$
+-   The data might follow an $ARIMA(0, d, q)$ if:
+    -   the PACF demonstrates exponentially decaying of sinusoidal
+    -   the ACF demonstrates a significant spike at lag $q$ abd none beyond lag $q$
+
+Find the best model:
+
+```{r ch09-ts-arima-33}
+
+# 1. plot the data and determine the initial values
+eg_data <- global_economy |>
+  filter(Code == 'EGY') 
+
+eg_data |> gg_tsdisplay(Exports, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-34}
+
+# 2. find the best model
+eg_data |>
+  model(ARIMA(Exports ~ pdq(0:4, 0:2, 0:3))) |> report()
+
+```
+
+## Estimation and order selection
+
+[The source of the section](https://otexts.com/fpp3/arima-estimation.html)
+
+Good models are obtained by minimising the AIC, AICc or BIC. Using the AICc is more prefered.
+
+It is important to note that these information criteria tend not to be good guides to selecting the appropriate order of differencing ($d$) of a model, but only for selecting the values of $p$ and $q$.
+
+## ARIMA modelling in `fable`
+
+[The source of the section](https://otexts.com/fpp3/arima-r.html)
+
+### How does ARIMA() work?
+
+**Hyndman-Khandakar algorithm for automatic ARIMA modelling:**
+
+1.  Determine the number of differences $0 \le d \le 2$ using repeated KPSS tests:
+
+    $H_0$: The time series is stationary.\
+    $H_1$: The time series is non-stationary.\
+    \
+    If $H_0$ is not rejected, then work with the origin series, otherwise (If $H_0$ is rejected, then a differencing is needed), apply the test to the first differenced series. Repeat the step, if $H_0$ is rejected, then work with the second differenced test, otherwise, work with the first differenced series.
+
+2.  Determine the values of $p$ and $q$ by minimising the AICc after diffferencing the data $d$ times using a stepwise search:
+
+    a.  Fit initial models: $ARIMA(0:2, d, 0:2)$ + constant (if $d \le 1$). If $d \le 1$ then fitted one more model $ARIMA(0, d, 0)$ without constant.
+    b.  The best model with the smallest AICc is set as current model.
+    c.  Consider variations of the current model:
+        -   try $p \pm 1$
+
+        -   try $q \pm 1$
+
+        -   include\\exclude a constant from the current model The variation of the model which AICc is the smallest is set as the new current model.
+    d.  Repeat **Step 2 (c.)** until no lower AICc can be found.
+
+### Modelling procedure
+
+The general approach for non-seasonal time series data:
+
+![](https://otexts.com/fpp3/figs/arimaflowchart.png)
+
+### Example: Central African Republic exports
+
+1.  Plot the data.
+
+```{r ch09-ts-arima-35}
+
+global_economy |>
+  filter(Code == 'CAF') |>
+  autoplot(Exports) +
+  labs(title = 'Central African Republic exports', y = '% of GDP')
+
+```
+
+```{r ch09-ts-arima-36}
+
+global_economy |>
+  filter(Code == 'CAF') |>
+  gg_tsdisplay(Exports, plot_type = 'partial') 
+
+```
+
+2.  The variance is not changing, so a Box-Cox transformation does not needed.
+
+3.  Teh data are not stationary, take a first difference of the data.
+
+```{r ch09-ts-arima-37}
+
+global_economy |>
+  filter(Code == 'CAF') |>
+  gg_tsdisplay(difference(Exports), plot_type='partial')
+
+```
+
+4.  The differenced data are now stationary.
+
+-   The PACF suggests an AR(2) model, ARIMA(2,1,0) is an initial model
+-   The ACF suggests an MA(3) model, ARIMA(0, 1, 3) is an alternative model
+
+```{r ch09-ts-arima-38}
+
+CAF_fit <-  global_economy |>
+  filter(Code == 'CAF') |>
+  model(arima210 = ARIMA(Exports ~ pdq(2,1,0)),
+        arima013 = ARIMA(Exports ~ pdq(0,1,3)),
+        stepwise = ARIMA(Exports),
+        search = ARIMA(Exports, stepwise = FALSE))
+
+CAF_fit |>
+  pivot_longer(!Country, names_to = 'Model Name',
+               values_to = 'Orders')
+
+```
+
+5.  ARIMA(3,1,0) has lowest AICc
+
+```{r ch09-ts-arima-39}
+
+CAF_fit |>
+  glance() |> 
+  arrange(AICc) |>
+  select(.model:BIC)
+
+```
+
+6.  The residuals look like white noise.
+
+```{r ch09-ts-arima-40}
+
+CAF_fit |>
+  select(search) |>
+  gg_tsresiduals()
+
+```
+
+A portmanteau test (with K = p + q = 3 + 0 = 3) suggests that the residuals are white noise too.
+
+```{r ch09-ts-arima-41}
+
+augment(CAF_fit) |>
+  filter(.model=='search') |>
+  features(.innov, ljung_box, lag = 10, dof = 3)
+
+```
+
+7.  Forecasts from the model.
+
+```{r ch09-ts-arima-42}
+
+CAF_fit |>
+  forecast(h=5) |>
+  filter(.model=='search') |>
+  autoplot(global_economy)
+
+```
+
+## Forecasting
+
+[The source of the section](https://otexts.com/fpp3/arima-forecasting.html)
+
+### Prediction intervals
+
+> The prediction intervals for ARIMA models are based on assumptions that the residuals are uncorrelated and normally distributed. If either of these assumptions does not hold, then the prediction intervals may be incorrect. For this reason, always plot the ACF and histogram of the residuals to check the assumptions before producing prediction intervals.
+
+If the residuals are uncorrelated but not normally distributed, then bootstrapped intervals can be obtained instead. This is easily achieved by simply adding `bootstrap=TRUE` in the `forecast()` function.
+
+## Seasonal ARIMA models
+
+[The source of the section](https://otexts.com/fpp3/seasonal-arima.html)
+
+### ARIMA Model Notation
+
+$$
+\text{ARIMA} \quad 
+\left( \underbrace{(p, d, q)}_{\text{Non-seasonal part of the model}}, 
+\underbrace{(P, D, Q)_m}_{\text{Seasonal part of the model}} \right)
+$$
+
+where $m$ is the seasonal period (number of observations per year).
+
+### ACF/PACF
+
+> The seasonal part of an AR or MA model will be seen in the seasonal lags of the PACF and ACF.
+
+$ARIMA(0,0,0)(0,0,1)_{12}$ model:
+
+-   ACF: a significant spike at lag 12 only
+-   PACF: exponential decay in the seasonal lags (12, 24, 36,...)
+
+$ARIMA(0,0,0)(1,0,0)_{12}$ model:
+
+-   ACF: exponential decay in the seasonal lags (12, 24, 36,...)
+-   PACF: a single significant spike at lag 12
+
+### Example: Monthly US leisure and hospitality employment
+
+```{r ch09-ts-arima-43}
+
+leisure <- us_employment |>
+  filter(Title == "Leisure and Hospitality",
+         year(Month) > 2000) |>
+  mutate(Employed = Employed/1000) |>
+  select(Month, Employed)
+autoplot(leisure, Employed) +
+  labs(title = "US employment: leisure and hospitality",
+       y="Number of people (millions)")
+
+```
+
+```{r ch09-ts-arima-44}
+
+leisure |>
+  gg_tsdisplay(difference(Employed, 12),
+               plot_type='partial', lag=36) +
+  labs(title="Seasonally differenced", y="")
+
+```
+
+```{r ch09-ts-arima-45}
+
+leisure |>
+  gg_tsdisplay(difference(Employed, 12) |> difference(),
+               plot_type='partial', lag=36) +
+  labs(title = "Double differenced", y="")
+
+```
+
+```{r ch09-ts-arima-46}
+
+fit <- leisure |>
+  model(
+    arima012011 = ARIMA(Employed ~ pdq(0,1,2) + PDQ(0,1,1)),
+    arima210011 = ARIMA(Employed ~ pdq(2,1,0) + PDQ(0,1,1)),
+    arima212111 = ARIMA(Employed ~ pdq(2,1,2) + PDQ(1,1,1)),
+    auto = ARIMA(Employed, stepwise = FALSE, approximation = FALSE)
+  )
+
+fit |>
+  pivot_longer(everything(), names_to = "Model name",
+                     values_to = "Orders")
+
+```
+
+```{r ch09-ts-arima-47}
+
+glance(fit) |> arrange(AICc) |> select(.model:BIC)
+
+```
+
+```{r ch09-ts-arima-48}
+
+fit |> select(auto) |> gg_tsresiduals(lag=36)
+
+```
+
+```{r ch09-ts-arima-49}
+
+augment(fit) |>
+  filter(.model == "auto") |>
+  features(.innov, ljung_box, lag=24, dof=4)
+
+```
+
+```{r ch09-ts-arima-50}
+
+forecast(fit, h=36) |>
+  filter(.model=='auto') |>
+  autoplot(leisure) +
+  labs(title = "US employment: leisure and hospitality",
+       y="Number of people (millions)")
+
+```
+
+## ARIMA vs ETS
+
+[The source of the section](https://otexts.com/fpp3/arima-ets.html)
+
+### Comparing `ARIMA()` and `ETS()` on non-seasonal data
+
+```{r ch09-ts-arima-51}
+
+aus_economy <- global_economy |>
+  filter(Code == "AUS") |>
+  mutate(Population = Population/1e6)
+
+aus_economy |>
+  slice(-n()) |>
+  stretch_tsibble(.init = 10) |>
+  model(
+    ETS(Population),
+    ARIMA(Population)
+  ) |>
+  forecast(h = 1) |>
+  accuracy(aus_economy) |>
+  select(.model, RMSE:MAPE)
+
+```
+
+```{r ch09-ts-arima-52}
+
+aus_economy |>
+  model(ETS(Population)) |>
+  forecast(h = "5 years") |>
+  autoplot(aus_economy |> filter(Year >= 2000)) +
+  labs(title = "Australian population",
+       y = "People (millions)")
+
+```
+
+### Comparing `ARIMA()` and `ETS()` on seasonal data
+
+```{r ch09-ts-arima-53}
+
+cement <- aus_production |>
+  select(Cement) |>
+  filter_index("1988 Q1" ~ .)
+train <- cement |> filter_index(. ~ "2007 Q4")
+
+```
+
+```{r ch09-ts-arima-54}
+
+fit_arima <- train |> model(ARIMA(Cement))
+report(fit_arima)
+
+```
+
+```{r ch09-ts-arima-55}
+
+fit_arima |> gg_tsresiduals(lag_max = 16)
+
+```
+
+```{r ch09-ts-arima-56}
+
+augment(fit_arima) |>
+  features(.innov, ljung_box, lag = 16, dof = 5)
+
+```
+
+```{r ch09-ts-arima-57}
+
+fit_ets <- train |> model(ETS(Cement))
+report(fit_ets)
+
+```
+
+```{r ch09-ts-arima-58}
+
+fit_ets |>
+  gg_tsresiduals(lag_max = 16)
+
+```
+
+```{r ch09-ts-arima-59}
+
+augment(fit_ets) |>
+  features(.innov, ljung_box, lag = 16)
+
+```
+
+```{r ch09-ts-arima-60}
+
+bind_rows(
+    fit_arima |> accuracy(),
+    fit_ets |> accuracy(),
+    fit_arima |> forecast(h = 10) |> accuracy(cement),
+    fit_ets |> forecast(h = 10) |> accuracy(cement)
+  ) |>
+  select(-ME, -MPE, -ACF1)
+
+```
+
+```{r ch09-ts-arima-61}
+
+cement |>
+  model(ARIMA(Cement)) |>
+  forecast(h="3 years") |>
+  autoplot(cement) +
+  labs(title = "Cement production in Australia",
+       y = "Tonnes ('000)")
+
+```
+
+## Exercises
+
+2.  
+
+```{r ch09-ts-arima-62}
+
+gafa_stock |>
+  filter(Symbol == 'AMZN') |>
+  gg_tsdisplay(Close, plot_type = 'partial')
+
+```
+
+-   ACF: Slowly decaying or very high values for initial lags.
+-   PACF: Large spike at lag 1, followed by small or zero values at higher lags.
+
+3.  
+
+```{r ch09-ts-arima-63}
+
+# a.
+
+turk <- global_economy |>
+  filter(Code == 'TUR')
+
+turk |>
+  autoplot(GDP) +
+  labs(title = 'Turkish GDP')
+
+```
+
+```{r ch09-ts-arima-64}
+
+# get to know the stationarity
+turk %>% 
+  features(GDP, features = unitroot_kpss)
+
+# => H0 is rejected - the data are non-stationary
+
+```
+
+```{r ch09-ts-arima-65}
+
+# find optimal lambda for box cox transformation
+optimal_lambda <- turk %>% 
+  features(GDP, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+# stabilize the variance 
+turk <- turk |>
+  mutate(transformed_GDP = box_cox(GDP, lambda = optimal_lambda))
+
+# get to know the order of differencing of the transformed (stable variance) data
+turk %>% 
+  features(transformed_GDP, features = unitroot_ndiffs)
+
+```
+
+```{r ch09-ts-arima-66}
+
+# diff the transformed data
+turk <- turk |>
+  mutate(diff_GDP = difference(transformed_GDP))
+
+# get to know the stationarity of the differenced transformed data
+turk |>
+  features(diff_GDP, features = unitroot_kpss)
+
+# => the data is now stationary
+
+```
+
+```{r ch09-ts-arima-67}
+
+# plot the data
+
+turk |>
+  select(contains('GDP')) |>
+  rename(`GDP (Box-Cox)` = transformed_GDP, `GDP (Differenced)` = diff_GDP) |>
+  pivot_longer(cols = contains('GDP'), names_to = 'name') |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+
+```
+
+```{r ch09-ts-arima-68}
+
+turk |>
+  select(contains('GDP')) |>
+  rename(`GDP (Box-Cox)` = transformed_GDP, `GDP (Differenced)` = diff_GDP) |>
+  gg_tsdisplay(`GDP (Differenced)`, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-69}
+
+# b.
+
+tas <- aus_accommodation |>
+  filter(State == 'Tasmania')
+
+tas |>
+  autoplot(Takings) +
+  labs(title = 'Accommodation takings in the state of Tasmania')
+
+```
+
+```{r ch09-ts-arima-70}
+
+# the data have  strong seasonality and variable variance
+
+# 1. Stable the variance by Box-Cox transformation
+#    1.1. Find optimal lambda for box cox transformation
+optimal_lambda <- tas %>% 
+  features(Takings, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+#    1.2. Stabilize the variance 
+tas <- tas |>
+  mutate(`Takings (Box-Cox)` = box_cox(Takings, lambda = optimal_lambda))
+
+
+# 2. Get to know the order of seasonal and first differencing is it's needed
+#   2.1. Get to know the order of seasonal defferencing
+tas |> 
+  features(`Takings (Box-Cox)`, features = unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-71}
+
+#   2.2 Make seasonal differencing
+tas <- tas |>
+  mutate(`Takings (sdiff)` = difference(`Takings (Box-Cox)`, lag = 4))
+#   2.3. Get to know the order of first differencing of seasonal differenced transformed data
+tas |> 
+  features(`Takings (sdiff)`, features = unitroot_ndiffs)
+
+# => the first differencing is not needed
+
+```
+
+```{r ch09-ts-arima-72}
+
+# 3. Get to know the stationarity of the seasonal differenced transformed data
+tas |>
+  features(`Takings (sdiff)`, features = unitroot_kpss)
+
+# => the data is now stationary
+
+```
+
+```{r ch09-ts-arima-73}
+
+# plot the data
+
+tas |>
+  select(contains('Takings')) |>
+  rename(`Takings (Differenced)` = `Takings (sdiff)`) |>
+  pivot_longer(cols = contains('Takings'), names_to = 'name') |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+
+```
+
+```{r ch09-ts-arima-74}
+
+tas |>
+  select(contains('Takings')) |>
+  rename(`Takings (Differenced)` = `Takings (sdiff)`) |>
+  gg_tsdisplay(`Takings (Differenced)`, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-75}
+
+# c.
+
+souvenirs |>
+  autoplot(Sales) +
+  labs(title = 'Monthly sales in Queensland, Australia')
+
+```
+
+```{r ch09-ts-arima-76}
+
+souvenirs |>
+  features(Sales, features = unitroot_kpss)
+
+# => the data is non-stationary
+
+```
+
+```{r ch09-ts-arima-77}
+
+# the data have strong seasonality and variable variance
+
+# 1. Stable the variance by Box-Cox transformation
+#    1.1. Find optimal lambda for box cox transformation
+optimal_lambda <- souvenirs %>% 
+  features(Sales, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+#    1.2. Stabilize the variance 
+souvenirs_2 <- souvenirs |>
+  mutate(`Sales (Box-Cox)` = box_cox(Sales, lambda = optimal_lambda))
+
+
+# 2. Get to know the order of seasonal and first differencing is it's needed
+#   2.1. Get to know the order of seasonal defferencing
+souvenirs_2 |> 
+  features(`Sales (Box-Cox)`, features = unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-78}
+
+#   2.2 Make seasonal differencing
+souvenirs_2 <- souvenirs_2 |>
+  mutate(`Sales (sdiff)` = difference(`Sales (Box-Cox)`, lag = 12))
+#   2.3. Get to know the order of first differencing of seasonal differenced transformed data
+souvenirs_2 |> 
+  features(`Sales (sdiff)`, features = unitroot_ndiffs)
+
+# => the first differencing is not needed
+
+```
+
+```{r ch09-ts-arima-79}
+
+# 3. Get to know the stationarity of the seasonal differenced transformed data
+souvenirs_2 |>
+  features(`Sales (sdiff)`, features = unitroot_kpss)
+
+# => the data is now stationary
+
+```
+
+```{r ch09-ts-arima-80}
+
+# plot the data
+
+souvenirs_2 |>
+  rename(`Sales (Differenced)` = `Sales (sdiff)`) |>
+  pivot_longer(cols = contains('Sales'), names_to = 'name') |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+
+```
+
+```{r ch09-ts-arima-81}
+
+souvenirs_2 |>
+  select(contains('Sales')) |>
+  rename(`Sales (Differenced)` = `Sales (sdiff)`) |>
+  gg_tsdisplay(`Sales (Differenced)`, plot_type = 'partial')
+
+```
+
+5.  
+
+```{r ch09-ts-arima-82}
+
+myseries <- myseries |>
+  select(-State, -Industry, -`Series ID`)
+
+# 1. Plot the data
+myseries |>
+  autoplot(Turnover)
+
+```
+
+```{r ch09-ts-arima-83}
+
+myseries |>
+  gg_tsdisplay(Turnover, plot_type = 'partial')
+
+# => monthly data have strong seasonality and unstable variance
+
+```
+
+```{r ch09-ts-arima-84}
+
+# 2. Get to know the stationarity
+myseries |>
+  features(Turnover, features = unitroot_kpss)
+
+# => H0  is rejected, the data is non-stationary
+
+```
+
+```{r ch09-ts-arima-85}
+
+# the data have strong seasonality and variable variance
+
+# 3. Stable the variance by Box-Cox transformation
+#    3.1. Find optimal lambda for box cox transformation
+optimal_lambda <- myseries %>% 
+  features(Turnover, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+#    3.2. Stabilize the variance 
+myseries <- myseries |>
+  mutate(`Turnover (Box-Cox)` = box_cox(Turnover, lambda = optimal_lambda))
+
+
+# 4. Get to know the order of seasonal and first differencing is it's needed
+#   4.1. Get to know the order of seasonal defferencing
+myseries |> 
+  features(`Turnover (Box-Cox)`, features = unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-86}
+
+#   4.2 Make seasonal differencing
+myseries <- myseries |>
+  mutate(`Turnover (Seasonal Difference)` = difference(`Turnover (Box-Cox)`, lag = 12))
+#   4.3. Get to know the order of first differencing of seasonal differenced transformed data
+myseries |> 
+  features(`Turnover (Seasonal Difference)`, features = unitroot_ndiffs)
+
+# => the first differencing is needed
+
+```
+
+```{r ch09-ts-arima-87}
+
+#   4.4. Make first differencing
+myseries <- myseries |>
+  mutate(`Turnover (First Difference)` = difference(`Turnover (Seasonal Difference)`))
+
+#   4.5. Get to know the stationarity of the first differenced of the seasonal differenced transformed data
+myseries |>
+  features(`Turnover (First Difference)`, features = unitroot_kpss)
+
+# => the data is now stationary
+
+```
+
+```{r ch09-ts-arima-88}
+
+# plot the data
+
+myseries |>
+  rename(`1. Raw data` = Turnover,
+         `2. Box-Cox`  = `Turnover (Box-Cox)`,
+         `3. Seasonal diff` = `Turnover (Seasonal Difference)`,
+         `4. First diff` = `Turnover (First Difference)`) |>
+  pivot_longer(-Month, names_to = 'name') |>
+  autoplot(value) +
+  facet_grid(factor(name) ~ ., scales = 'free_y')
+
+```
+
+6.  
+
+```{r ch09-ts-arima-89}
+
+#a.
+y <- numeric(100)
+e <- rnorm(100)
+for(i in 2:100)
+  y[i] <- 0.6*y[i-1] + e[i]
+sim <- tsibble(idx = seq_len(100), y = y, index = idx)
+
+```
+
+```{r ch09-ts-arima-90}
+
+# b.
+sim |>
+  gg_tsdisplay(y, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-91}
+
+# c. 
+tsibble(n = 1:100, y = arima.sim(model = list(ma=0.6), n = 100),
+        index = n) |>
+# d.
+    gg_tsdisplay(y, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-92}
+
+# c.
+# MA(1) from scratch
+
+y <- numeric(100)
+e <- rnorm(100)
+for(i in 2:100)
+  y[i] <- e[i] + 0.6*e[i-1] 
+sim <- tsibble(idx = seq_len(100), y = y, index = idx)
+# d.
+sim |>
+  gg_tsdisplay(y, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-93}
+
+set.seed(12345)
+
+# e. 
+tsibble(n = 1:100, y = arima.sim(model = list(ar=0.6 , ma=0.6), n = 100),
+        index = n) |>
+    gg_tsdisplay(y, plot_type = 'partial')
+
+
+```
+
+```{r ch09-ts-arima-94}
+
+# from scratch
+
+# ARMA(1, 1) from scratch
+set.seed(12345)
+
+y <- numeric(100)
+e <- rnorm(100)
+for(i in 2:100)
+  y[i] <- 0.6*y[i-1] + e[i] + 0.6*e[i-1] 
+sim <- tsibble(idx = seq_len(100), y = y, index = idx)
+
+sim |>
+  gg_tsdisplay(y, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-95}
+
+# f.
+# AR(2) from scratch
+set.seed(12345)
+
+y <- numeric(100)
+e <- rnorm(100)
+for(i in 3:100)
+  y[i] <- (-0.8)*y[i-1] + 0.3*y[i-2] + e[i]
+sim <- tsibble(idx = seq_len(100), y = y, index = idx)
+
+#g.
+sim |>
+  gg_tsdisplay(y, plot_type = 'partial')
+
+```
+
+7.  
+
+```{r ch09-ts-arima-96}
+
+train <- aus_airpassengers |>
+  filter(Year < 2012)
+
+# a.
+train |>
+  model(ARIMA(Passengers, stepwise = FALSE, approximation = FALSE)) |>
+  report()
+
+```
+
+```{r ch09-ts-arima-97}
+
+train |>
+  model(ARIMA(Passengers, stepwise = FALSE, approximation = FALSE)) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-98}
+
+train |>
+  model(ARIMA(Passengers, stepwise = FALSE, approximation = FALSE)) |>
+  forecast(h=10) |>
+  autoplot(train)
+
+```
+
+```{r ch09-ts-arima-99}
+
+# c.
+train |>
+  model(
+    auto = ARIMA(Passengers, stepwise = FALSE, approximation = FALSE),
+    arima010 = ARIMA(Passengers ~ pdq(0,1,0))) |>
+  forecast(h = 10) |>
+  autoplot(train)
+
+```
+
+```{r ch09-ts-arima-100}
+
+# c-e
+train |>
+  model(
+    auto = ARIMA(Passengers, stepwise = FALSE, approximation = FALSE),
+    arima010 = ARIMA(Passengers ~ pdq(0,1,0)),
+    arima212 = ARIMA(Passengers ~ pdq(2,1,2)),
+    arima021 = ARIMA(Passengers ~ 1 + pdq(0,2,1))) |>
+  forecast(h = 10) |>
+  autoplot(train, level = NULL)
+
+```
+
+8.  
+
+```{r ch09-ts-arima-101}
+
+# find US GDP
+usa <- global_economy |>
+  filter(Code == 'USA') |>
+  select(GDP)
+
+# a.
+usa |> gg_tsdisplay()
+# there is trend in the data
+
+```
+
+```{r ch09-ts-arima-102}
+
+optimal_lambda <- usa %>% 
+  features(GDP, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+optimal_lambda
+
+```
+
+```{r ch09-ts-arima-103}
+
+usa <- usa |>
+  mutate(GDP_boxcox = box_cox(GDP, lambda=optimal_lambda))
+
+usa |>
+  gg_tsdisplay(GDP_boxcox, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-104}
+
+# b.
+
+# make data stationary
+usa |>
+  mutate(GDP_diff = difference(GDP_boxcox)) |>
+  gg_tsdisplay(GDP_diff, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-105}
+
+# it's probably AR(1) process, make an experiment
+
+# c.
+
+usa |>
+  model(
+    ar1 = ARIMA(GDP_boxcox ~ pdq(1, 1, 0)), # my bet
+    ma1 = ARIMA(GDP_boxcox ~ pdq(0, 1, 1)),
+    arima111 = ARIMA(GDP_boxcox ~ pdq(1,1,1)),
+    auto = ARIMA(GDP_boxcox, stepwise = F, approximation = F)) |>
+  glance()
+
+```
+
+```{r ch09-ts-arima-106}
+
+# d.
+
+usa |>
+  model(
+    ar1 = ARIMA(GDP_boxcox ~ pdq(1, 1, 0))) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-107}
+
+# e.
+usa |>
+  model(
+    ar1 = ARIMA(GDP_boxcox ~ pdq(1, 1, 0))) |>
+  forecast(h = 10) |>
+  autoplot(usa)
+
+
+```
+
+```{r ch09-ts-arima-108}
+
+# f.
+usa |>
+  model(
+    ar1 = ARIMA(GDP ~ pdq(1, 1, 0)),
+    ets_AAN = ETS(GDP ~ error('A') + trend('A') + season('N')),
+    ets_AAdN = ETS(GDP ~ error('A') + trend('Ad') + season('N')),) |>
+  forecast(h = 20) |>
+  autoplot(usa, level = NULL)
+
+```
+
+9.  
+
+```{r ch09-ts-arima-109}
+
+# a. 
+uk <- aus_arrivals |>
+  filter(Origin == 'UK')
+
+uk |> gg_tsdisplay()
+
+```
+
+-   The variance is not constant
+-   There is strong seasonality in the data
+-   There is trend in the data
+
+```{r ch09-ts-arima-110}
+
+# b.
+
+# transform the data to make the variance constant
+optimal_lambda <- uk %>% 
+  features(Arrivals, features = guerrero) %>% 
+  pull(lambda_guerrero)
+
+uk <- uk |>
+  mutate(Arrivals_boxcox = box_cox(Arrivals, lambda = optimal_lambda))
+
+uk |> gg_tsdisplay(Arrivals_boxcox)
+
+```
+
+```{r ch09-ts-arima-111}
+
+uk |>
+  features(Arrivals_boxcox, features = unitroot_kpss)
+
+# => H0 is rejected - the data are non-stationary
+
+```
+
+```{r ch09-ts-arima-112}
+
+# the order of seasonal differencing
+uk %>% 
+  features(Arrivals_boxcox, features = unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-113}
+
+uk <- uk |>
+      mutate(Arrivals_sdiff = difference(Arrivals_boxcox, lag = 4))
+
+uk |>
+  features(Arrivals_sdiff, features = unitroot_kpss)
+
+# => H0 is rejected - the data are still non-stationary
+
+```
+
+```{r ch09-ts-arima-114}
+uk %>% 
+  features(Arrivals_sdiff, features = unitroot_ndiffs)
+
+```
+
+```{r ch09-ts-arima-115}
+
+uk <- uk |>
+      mutate(Arrivals_diff = difference(Arrivals_sdiff))
+
+uk |>
+  features(Arrivals_diff, features = unitroot_kpss)
+
+# => H0 is not rejected - the data are now stationary
+
+```
+
+```{r ch09-ts-arima-116}
+
+uk |> gg_tsdisplay(Arrivals_diff, plot_type = 'partial')
+
+```
+
+The plot suggests ARIMA(1,1,1)(1,1,1)
+
+```{r ch09-ts-arima-117}
+
+fits <- uk |>
+  model(auto = ARIMA(Arrivals_boxcox, stepwise = FALSE, approximation = FALSE),
+        arima111_111 = ARIMA(Arrivals_boxcox ~ pdq(1,1,1) + PDQ(1,1,1)))
+
+fits |>
+  glance()
+
+```
+
+```{r ch09-ts-arima-118}
+
+fits$auto[[1]] |> report()
+
+```
+
+```{r ch09-ts-arima-119}
+
+fits |>
+  forecast(h = 12) |>
+  autoplot(uk, level = NULL)
+
+```
+
+```{r ch09-ts-arima-120}
+
+frc <- fits |>
+          forecast(h = 12, lambda = optimal_lambda) |>
+          mutate(.mean = inv_box_cox(.mean, lambda = optimal_lambda))
+
+
+ggplot(uk) +
+  geom_line(aes(x = Quarter, y = Arrivals)) +
+  geom_line(data=frc, aes(x = Quarter, y = .mean, color = .model))
+
+```
+
+10. 
+
+```{r ch09-ts-arima-121}
+
+series <- us_employment |>
+  filter(Series_ID == 'CEU7071300001', !is.na(Employed))
+
+series |>
+  autoplot(Employed)
+
+```
+
+```{r ch09-ts-arima-122}
+
+# a.
+
+series |>
+  gg_tsdisplay()
+
+```
+
+```{r ch09-ts-arima-123}
+
+series |>
+  model(STL(Employed ~ trend(window = 7) + season(window = 7))) |>
+  components() |>
+  autoplot()
+
+```
+
+```{r ch09-ts-arima-124}
+
+# b.
+
+optimal_lambda <- series |>
+  features(Employed, guerrero) |>
+  pull(lambda_guerrero)
+
+series <- series |>
+  mutate(Employed_transformed = box_cox(Employed, lambda = optimal_lambda))
+
+series |>
+  autoplot(Employed_transformed)
+
+# the data have thrend and strong seasonality
+
+```
+
+```{r ch09-ts-arima-125}
+
+# c.
+
+series |>
+  features(Employed, unitroot_kpss)
+
+# => H0 is rejected, the data are non-stationary
+
+```
+
+```{r ch09-ts-arima-126}
+
+# get to know the order of the seasonal differencing 
+series |>
+  features(Employed, unitroot_nsdiffs)
+
+```
+
+```{r ch09-ts-arima-127}
+
+series <- series |>
+  mutate(Employed_sdiff = difference(Employed_transformed, lag=12))
+
+series |>
+  features(Employed_sdiff, c(unitroot_nsdiffs, unitroot_ndiffs, unitroot_kpss))
+
+# => H0 is rejected, the data are still non-stationary
+
+```
+
+```{r ch09-ts-arima-128}
+
+series <- series |>
+  mutate(Employed_diff = difference(Employed_sdiff))
+
+series |>
+  features(Employed_diff, c(unitroot_nsdiffs, unitroot_ndiffs, unitroot_kpss))
+
+# => the data are now stationary
+
+```
+
+```{r ch09-ts-arima-129}
+
+# d.
+
+series |>
+  gg_tsdisplay(Employed_diff, plot_type = 'partial')
+
+# Plot suggests
+# ARIMA(0,1,3)(0,1,1)
+# ARIMA(3,1,0)(3,1,0)
+
+```
+
+```{r ch09-ts-arima-130}
+
+fits <- series |>
+  model(
+    arima013_021 = ARIMA(Employed_transformed ~ pdq(0,1,3) + PDQ(0,1,1)),
+    arima310_320 = ARIMA(Employed_transformed ~ pdq(3,1,0) + PDQ(3,1,0)),
+    auto = ARIMA(Employed_transformed, stepwise = FALSE, approximation = FALSE)
+  )
+
+fits
+
+```
+
+```{r ch09-ts-arima-131}
+
+fits |>
+  glance()
+
+```
+
+```{r ch09-ts-arima-132}
+
+# e.
+
+fits |>
+  select(arima013_021) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-133}
+
+fits |>
+  select(arima310_320) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-134}
+
+fits |>
+  select(auto) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-135}
+
+# f.
+
+fits |>
+  forecast(h = 36) |>
+  autoplot(series, level = NULL) +
+  facet_grid(factor(.model) ~ .)
+
+```
+
+```{r ch09-ts-arima-136}
+
+fits |>
+  forecast(h = 36) |>
+  mutate(.mean = inv_box_cox(.mean, lambda = optimal_lambda)) |>
+  ggplot() +
+  geom_line(data = series, aes(x = Month, y = Employed)) +
+  geom_line(aes(x = Month, y = .mean, color = .model)) +
+  facet_grid(factor(.model) ~ .)
+
+```
+
+11. 
+
+```{r ch09-ts-arima-137}
+
+# a.
+
+gas <- aus_production |>
+  select(Gas)
+
+gas |>
+  gg_tsdisplay(Gas, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-138}
+
+optimal_lambda <- gas |>
+  features(Gas, guerrero)
+
+gas <- gas |>
+  mutate(Gas_boxcox = box_cox(Gas, lambda = optimal_lambda))
+
+gas |>
+    gg_tsdisplay(Gas_boxcox, plot_type = 'partial')
+
+```
+
+```{r ch09-ts-arima-139}
+
+# b.
+
+gas |>
+  features(Gas_boxcox, c(unitroot_kpss, unitroot_ndiffs, unitroot_nsdiffs))
+
+```
+
+```{r ch09-ts-arima-140}
+
+gas |>
+  features(difference(difference(Gas_boxcox, lag=12)), c(unitroot_kpss, 
+                                             unitroot_ndiffs, 
+                                             unitroot_nsdiffs))
+
+gas |>
+  gg_tsdisplay(difference(difference(Gas_boxcox, lag=12)), plot_type = 'partial', lag_max = 36)
+
+```
+
+```{r ch09-ts-arima-141}
+
+# c.
+# ARIMA(0,1,2)(2,1,1)
+# ARIMA(2,1,0)(2,1,0)
+
+fits <- gas |>
+  model(
+    arima012_211 = ARIMA(Gas_boxcox ~ pdq(0,1,2) + PDQ(2,1,1)),
+    arima210_210 = ARIMA(Gas_boxcox ~ pdq(2,1,0) + PDQ(2,1,0)),
+    auto = ARIMA(Gas_boxcox, stepwise = FALSE, approximation = FALSE)
+    )
+
+fits |>
+  glance() |> 
+  arrange(AICc) |>
+  select(.model:BIC)
+
+```
+
+```{r ch09-ts-arima-142}
+
+# d.
+fits |>
+  select(arima012_211) |>
+  gg_tsresiduals()
+
+```
+
+```{r ch09-ts-arima-143}
+
+fits |>
+  select(arima210_210) |>
+  gg_tsresiduals()
+
+
+```
+
+```{r ch09-ts-arima-144}
+
+fits |>
+  select(auto) |>
+  gg_tsresiduals()
+
+
+```
+
+```{r ch09-ts-arima-145}
+
+# e.
+
+fits |>
+  forecast(h = 24) |>
+  autoplot(gas, level = NULL)
+
+```

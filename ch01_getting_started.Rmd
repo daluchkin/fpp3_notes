@@ -1,0 +1,113 @@
+# Getting started
+
+## What can be forecast?
+
+> The predictability of an event or a quantity depends on several factors including:
+>
+> -   how well we understand the factors that contribute to it;
+> -   how much data is available;
+> -   how similar the future is to the past;
+> -   whether the forecasts can affect the thing we are trying to forecast.
+
+## Forecasting, goals and planning
+
+Forecasting predicts future events using historical data to inform business decisions. It's distinct from:
+
+-   **Goals:** Desired outcomes.
+-   **Planning:** Actions to meet forecasts and goals.
+
+Types of Forecasts:
+
+-   **Short-term:** For scheduling.
+-   **Medium-term:** For resource planning.
+-   **Long-term:** For strategic planning (market opportunities, resources).
+
+A good forecasting system involves selecting the right methods, refining them over time, and having strong organizational support.
+
+## Determining what to forecast
+
+Ask which dimensions the forecast needs to cover, such as:
+
+-   Product group
+-   Product line
+-   Total sales or by region, etc.
+
+Determine whether the required data should be weekly, monthly, or yearly, depending on the specifics.
+
+Consider the forecast horizon: one month in advance, for 6 months, or for 10 years.
+
+## Forecasting data and methods
+
+> The appropriate forecasting methods depend largely on what data are available.
+
+This chapter explains that forecasting methods depend on available data:
+
+-   **Qualitative methods** are used when no data is available.
+-   **Quantitative methods**\_ are applied when past data exists and patterns are expected to continue, with a focus on time series forecasting (e.g., stock prices, sales, demand).
+
+**Time series** models predict future values based on trends and seasonal component, while **explanatory models** incorporate external factors. **Mixed models** combine both approaches.
+
+The choice of model depends on data, system complexity, and forecast goals, with time series models often preferred for their simplicity and accuracy.
+
+## Some case studies
+
+[See the source](https://otexts.com/fpp3/case-studies.html)
+
+## The basic steps in a forecasting task
+
+### Summary: Five Basic Steps of Forecasting
+
+### Summary: Five Basic Steps of Forecasting
+
+1.  **Problem Definition**:\
+    Clearly define the problem, understanding who needs the forecasts and how they will be used within the organization.
+
+2.  **Gathering Information**:\
+    Collect statistical data and expert knowledge. If data is limited, use judgmental forecasting. Adjust for structural changes if needed.
+
+3.  **Preliminary Analysis**:\
+    Graph data to identify trends, seasonality, and outliers. Assess relationships between variables.
+
+4.  **Choosing and Fitting Models**:\
+    Select models based on data and forecast needs. Compare multiple models like regression, ARIMA, or exponential smoothing.
+
+5.  **Using and Evaluating Models**:\
+    Use the model to forecast and evaluate accuracy once actual data is available. Address practical issues like missing data.
+
+## The statistical forecasting perspective
+
+> The further ahead we forecast, the more uncertain we are.
+
+> A forecast is accompanied by a prediction interval giving a range of values the random variable could take with relatively high probability.
+
+80% and 95% **prediction intervals** are usually used.
+
+## Excercises
+
+1.  For cases 3 and 4 in Section [1.5](https://otexts.com/fpp3/case-studies.html#case-studies), list the possible predictor variables that might be useful, assuming that the relevant data are available.
+
+**Answer**:
+
+-   **Case 3:** Possible predictor variables: Brand, model, millage (total, kmpl), transmission, type of engine and fuel, new car price, region of selling, a number of service request, class of car (SUV, sedan, off-road, etc.), insurance cost, age of a car.
+-   **Case 4:** Possible predictor variables: class of passanger, calendar of school holidays, sports events, advertising campaigns, competition behaviour (advertising compaigns), calendar of pilots' strikes.
+
+2.  For case 3 in Section [1.5](https://otexts.com/fpp3/case-studies.html#case-studies), describe the five steps of forecasting in the context of this project.
+
+**Answer**:
+
+Steps of forecasting:
+
+1.  **Problem Definition**:\
+    The goal is to forecast vehicle resale values to help the company control profits and improve leasing and sales policies. It's important to know who will use the forecasts and how they will impact decisions.
+
+2.  **Gathering Information**:\
+    The company provided a lot of data on past vehicles and their resale values. Though the specialists were unhelpful, their expertise on factors affecting resale values could still be valuable. We may also need to fill gaps using judgmental methods if the data is incomplete.
+
+3.  **Preliminary Analysis**:\
+    Start by analyzing the data for trends, patterns, or outliers. Look at factors like vehicle age, model, or market timing to see how they affect resale values. Identify any unusual data points.
+
+4.  **Choosing and Fitting Models**:\
+    Test different models (e.g., regression or time series) to find the best fit for the data. Compare models to see which one gives the most accurate forecasts.
+
+5.  **Using and Evaluating Models**:\
+    Once the model is chosen, use it to predict future resale values. Monitor how well the forecasts match actual results and make adjustments if needed. The company can then use the forecasts to refine their sales and leasing strategies.

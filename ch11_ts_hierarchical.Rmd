@@ -1,0 +1,449 @@
+# Forecasting hierarchical and grouped time series
+
+[The source of the chapter](https://otexts.com/fpp3/hierarchical.html)
+
+```{r ch11-ts-hierarchical-1}
+
+# loading libraries
+library(tsibble)
+library(tsibbledata)
+library(tidyverse)
+# to read data
+library(rio)
+library(ggplot2)
+library(fabletools)
+library(feasts)
+library(fpp3)
+library(latex2exp)
+library(forecast)
+
+```
+
+## Hierarchical and grouped time series
+
+[The source of the section](https://otexts.com/fpp3/hts.html)
+
+### Hierarchical time series
+
+![A two level hierarchical tree diagram.](https://otexts.com/fpp3/figs/hts.png)
+
+\$\$ y_t = y\_{AA,t} + y\_{AB,t} + y\_{AC,t} + y\_{BA,t} + y\_{BB,t}\\ y\_{A,t} = y\_{AA,t} + y\_{AB,t} + y\_{AC,t},\space \space y\_{B,t}=y\_{BA,t} + y\_{BB,t}\\
+
+So, y_t =y\_{A,t} +y\_{B,t} \$\$
+
+### Example: Australian tourism hierarchy
+
+![Australian states and tourism regions](https://otexts.com/fpp3/fpp_files/figure-html/ausmap-1.png)
+
+```{r ch11-ts-hierarchical-2}
+
+tourism <- tsibble::tourism |>
+  mutate(State = recode(State,
+    `New South Wales` = "NSW",
+    `Northern Territory` = "NT",
+    `Queensland` = "QLD",
+    `South Australia` = "SA",
+    `Tasmania` = "TAS",
+    `Victoria` = "VIC",
+    `Western Australia` = "WA"
+  ))
+
+```
+
+```{r ch11-ts-hierarchical-3}
+
+tourism_hts <- tourism |>
+  aggregate_key(State / Region, Trips = sum(Trips))
+
+tourism_hts
+
+```
+
+```{r ch11-ts-hierarchical-4}
+
+tourism_hts |>
+  filter(is_aggregated(Region)) |>
+  autoplot(Trips) +
+  labs(y = "Trips ('000)",
+       title = "Australian tourism: national and states") +
+  facet_wrap(vars(State), scales = "free_y", ncol = 3) +
+  theme(legend.position = "none")
+
+```
+
+```{r ch11-ts-hierarchical-5}
+
+tourism_hts |>
+  filter(State %in% c("NT", "QLD", "TAS", "VIC"), is_aggregated(Region)) |>
+  select(-Region) |>
+  mutate(State = factor(State, levels=c("QLD","VIC","NT","TAS"))) |>
+  gg_season(Trips) +
+  facet_wrap(vars(State), nrow = 2, scales = "free_y")+
+  labs(y = "Trips ('000)")
+
+```
+
+### Grouped time series
+
+![Alternative representations of a two level grouped structure](https://otexts.com/fpp3/fpp_files/figure-html/GroupTree-1.png)
+
+$$
+y_t = y_{AX,t} + y_{AY,t} + y_{BX,t} + y_{BY,t}\\
+y_{A,t} = y_{AX,t} + y_{AY,t},\space \space y_{B,t}=y_{BX,t} + y_{BY,t}\\
+y_{X,t} = y_{AX,t} + y_{AY,t},\space \space y_{Y,t}=y_{BX,t} + y_{BY,t}
+$$
+
+### Example: Australian prison population
+
+```{r ch11-ts-hierarchical-6}
+
+prison <- readr::read_csv("https://OTexts.com/fpp3/extrafiles/prison_population.csv") |>
+  mutate(Quarter = yearquarter(Date)) |>
+  select(-Date)  |>
+  as_tsibble(key = c(Gender, Legal, State, Indigenous),
+             index = Quarter) |>
+  relocate(Quarter)
+
+```
+
+```{r ch11-ts-hierarchical-7}
+
+prison_gts <- prison |>
+  aggregate_key(Gender * Legal * State, Count = sum(Count)/1e3)
+
+prison_gts |>
+  filter(!is_aggregated(Gender), is_aggregated(Legal),
+         is_aggregated(State)) |>
+  autoplot(Count) +
+  labs(y = "Number of prisoners ('000)")
+
+```
+
+```{r ch11-ts-hierarchical-8}
+
+prison_gts |>
+  filter(!is_aggregated(Gender), !is_aggregated(Legal),
+         !is_aggregated(State)) |>
+  mutate(Gender = as.character(Gender)) |>
+  ggplot(aes(x = Quarter, y = Count,
+             group = Gender, colour=Gender)) +
+  stat_summary(fun = sum, geom = "line") +
+  labs(title = "Prison population by state and gender",
+       y = "Number of prisoners ('000)") +
+  facet_wrap(~ as.character(State),
+             nrow = 1, scales = "free_y") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+### Mixed hierarchical and grouped structure
+
+```{r ch11-ts-hierarchical-9}
+
+tourism_full <- tourism |>
+  aggregate_key((State/Region) * Purpose, Trips = sum(Trips))
+
+```
+
+```{r ch11-ts-hierarchical-10}
+
+tourism_full |>
+  filter(!is_aggregated(Purpose), is_aggregated(State), is_aggregated(Region)) |>
+  ggplot(aes(x = Quarter, y = Trips, color = factor(Purpose))) +
+  stat_summary(fun = sum, geom = 'line') +
+  facet_wrap(~factor(Purpose), scales = 'free_y') +
+  guides(color = guide_legend(title = "Purpose")) 
+
+```
+
+```{r ch11-ts-hierarchical-11}
+
+tourism_full |>
+  filter(!is_aggregated(Purpose), !is_aggregated(State), !is_aggregated(Region)) |>
+  ggplot(aes(x = Quarter, y = Trips, color = factor(Purpose))) + 
+  stat_summary(fun = sum, geom = 'line') +
+  facet_wrap(~State, nrow=2, scales = 'free_y') +
+  guides(color = guide_legend(title = "Purpose")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+## Single level approaches
+
+[The source of the section](https://otexts.com/fpp3/single-level.html)
+
+### The bottom-up approach
+
+This approach involves the following steps:
+
+1.  Generating forecasts for each series at the bottom level
+2.  Summing these forecasts to produce forecasts for all the series in the structure
+
+![A two level hierarchical tree diagram.](https://otexts.com/fpp3/figs/hts.png)
+
+
+$$
+\tilde{y}_{h} = \hat y_{AA,h} + \hat y_{AB,h} + \hat y_{AC,h} + \hat y_{BA,h} + \hat y_{BB,h}\\
+\hat y_{A,h} = \hat y_{AA,h} + \hat y_{AB,h} + \hat y_{AC,h}\\
+\hat y_{B,h} = \hat y_{BA,h} + \hat y_{BB,h}
+$$
+
+#### Example: Generating bottom-up forecasts
+
+
+```{r ch11-ts-hierarchical-12}
+
+tourism_state <- tourism |>
+  aggregate_key(State, Trips = sum(Trips))
+
+fcasts_state <- tourism_state |>
+  filter(!is_aggregated(State)) |>
+  model(ets = ETS(Trips)) |>
+  forecast()
+
+# Sum bottom level forecasts to get top-level forecasts
+fcasts_national <- fcasts_state |>
+  summarise(value = sum(Trips), .mean = mean(value))
+
+fcasts_national
+
+```
+
+The general approach:
+
+```{r ch11-ts-hierarchical-13}
+
+tourism_state |>
+  model(ets = ETS(Trips)) |>
+  reconcile(bu = bottom_up(ets)) |>
+  forecast()
+
+```
+
+
+#### Workflow for forecasting aggregation structures
+
+
+```{r ch11-ts-hierarchical-14, eval=FALSE, include=FALSE}
+
+data |> aggregate_key() |> model() |> reconcile() |> forecast()
+# 1.     2.                 3.         4.             5.
+
+```
+
+
+1. Begin with a tsibble object (here labelled data) containing the individual bottom-level series.
+2. Define in aggregate_key() the aggregation structure and build a tsibble object that also contains the aggregate series.
+3. Identify a model() for each series, at all levels of aggregation.
+4. Specify in reconcile() how the coherent forecasts are to be generated from the selected models.
+5. Use the forecast() function to generate forecasts for the whole aggregation structure.
+
+
+### Top-down approaches
+
+
+1. Generating forecastsfor the Total series.
+2. Disaggregating down the hierarchy.
+
+![A two level hierarchical tree diagram.](https://otexts.com/fpp3/figs/hts.png)
+
+
+#### Average historical proportions
+
+```{r ch11-ts-hierarchical-15}
+
+tourism_state |>
+  model(ets = ETS(Trips)) |>
+  reconcile(td = top_down(ets, method = "average_proportions")) |>
+  forecast()
+
+```
+
+#### Proportions of the historical averages
+
+```{r ch11-ts-hierarchical-16}
+
+tourism_state |>
+  model(ets = ETS(Trips)) |>
+  reconcile(td = top_down(ets, method = "proportion_averages")) |>
+  forecast()
+
+```
+
+#### Forecast proportions
+
+```{r ch11-ts-hierarchical-17}
+
+tourism_state |>
+  model(ets = ETS(Trips)) |>
+  reconcile(td = top_down(ets, method = "forecast_proportions")) |>
+  forecast()
+
+```
+
+```{r ch11-ts-hierarchical-18}
+
+frcst_comp <- tourism_state |>
+  model(ets = ETS(Trips)) |>
+  reconcile(
+    td1 = top_down(ets, method = "average_proportions"),
+    td2 = top_down(ets, method = "proportion_averages"),
+    td3 = top_down(ets, method = "forecast_proportions")) |>
+  forecast() 
+
+frcst_comp |>
+  filter(is_aggregated(State), .model != 'ets') |>
+  autoplot(level = NULL) +
+  facet_grid(.model~.)
+
+```
+
+
+## Forecast reconciliation
+
+[The source of the section](https://otexts.com/fpp3/reconciliation.html)
+
+
+## Forecasting Australian domestic tourism
+
+[The source of the section](https://otexts.com/fpp3/tourism.html)
+
+
+```{r ch11-ts-hierarchical-19}
+
+tourism_full <- tourism |>
+  aggregate_key((State/Region) * Purpose, Trips = sum(Trips))
+
+fit <- tourism_full |>
+  filter(year(Quarter) <= 2015) |>
+  model(base = ETS(Trips)) |>
+  reconcile(
+    bu = bottom_up(base),
+    ols = min_trace(base, method = "ols"),
+    mint = min_trace(base, method = "mint_shrink")
+  )
+
+fc <- fit |> forecast(h = "2 years")
+
+```
+
+
+```{r ch11-ts-hierarchical-20}
+
+fc |>
+  filter(is_aggregated(Region), is_aggregated(Purpose)) |>
+  autoplot(
+    tourism_full |> filter(year(Quarter) >= 2011),
+    level = NULL
+  ) +
+  labs(y = "Trips ('000)") +
+  facet_wrap(vars(State), scales = "free_y")
+
+```
+
+```{r ch11-ts-hierarchical-21}
+
+fc |>
+  filter(is_aggregated(State), !is_aggregated(Purpose)) |>
+  autoplot(
+    tourism_full |> filter(year(Quarter) >= 2011),
+    level = NULL
+  ) +
+  labs(y = "Trips ('000)") +
+  facet_wrap(vars(Purpose), scales = "free_y")
+
+```
+
+```{r ch11-ts-hierarchical-22}
+
+fc |>
+  filter(is_aggregated(State), is_aggregated(Purpose)) |>
+  accuracy(
+    data = tourism_full,
+    measures = list(rmse = RMSE, mase = MASE)
+  ) |>
+  group_by(.model) |>
+  summarise(rmse = mean(rmse), mase = mean(mase))
+
+```
+
+
+## Reconciled distributional forecasts
+
+[The source of the section](https://otexts.com/fpp3/rec-prob.html)
+
+
+## Forecasting Australian prison population
+
+[The source of the section](https://otexts.com/fpp3/prison.html)
+
+```{r ch11-ts-hierarchical-23}
+
+prison <- readr::read_csv("https://OTexts.com/fpp3/extrafiles/prison_population.csv") |>
+  mutate(Quarter = yearquarter(Date)) |>
+  select(-Date)  |>
+  as_tsibble(key = c(Gender, Legal, State, Indigenous),
+             index = Quarter) |>
+  relocate(Quarter)
+
+prison_gts <- prison |>
+  aggregate_key(Gender * Legal * State, Count = sum(Count)/1e3)
+
+fit <- prison_gts |>
+  filter(year(Quarter) <= 2014) |>
+  model(base = ETS(Count)) |>
+  reconcile(
+    bottom_up = bottom_up(base),
+    MinT = min_trace(base, method = "mint_shrink")
+  )
+fc <- fit |> forecast(h = 8)
+
+```
+
+```{r ch11-ts-hierarchical-24}
+
+fc |>
+  filter(is_aggregated(State), is_aggregated(Gender),
+         is_aggregated(Legal)) |>
+  autoplot(prison_gts, alpha = 0.7, level = 90) +
+  labs(y = "Number of prisoners ('000)",
+       title = "Australian prison population (total)")
+
+```
+
+```{r ch11-ts-hierarchical-25}
+
+fc |>
+  filter(
+    .model %in% c("base", "MinT"),
+    !is_aggregated(State), is_aggregated(Legal),
+    is_aggregated(Gender)
+  ) |>
+  autoplot(
+    prison_gts |> filter(year(Quarter) >= 2010),
+    alpha = 0.7, level = 90
+  ) +
+  labs(title = "Prison population (by state)",
+       y = "Number of prisoners ('000)") +
+  facet_wrap(vars(State), scales = "free_y", ncol = 4) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r ch11-ts-hierarchical-26}
+
+fc |>
+  filter(is_aggregated(State), is_aggregated(Gender),
+         is_aggregated(Legal)) |>
+  accuracy(data = prison_gts,
+           measures = list(mase = MASE,
+                           ss = skill_score(CRPS)
+                           )
+           ) |>
+  group_by(.model) |>
+  summarise(mase = mean(mase), sspc = mean(ss) * 100)
+
+```
+
+
+

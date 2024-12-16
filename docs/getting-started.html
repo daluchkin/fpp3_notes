@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 1 Getting started | Forecasting: Principles and Practice (3rd ed)</title>
+  <meta name="description" content="Chapter 1 Getting started | Forecasting: Principles and Practice (3rd ed)" />
+  <meta name="generator" content="bookdown 0.41 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 1 Getting started | Forecasting: Principles and Practice (3rd ed)" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta name="github-repo" content="https://github.com/daluchkin/fpp3_notes" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 1 Getting started | Forecasting: Principles and Practice (3rd ed)" />
+  
+  
+  
+
+<meta name="author" content="Dmitry Luchkin" />
+
+
+<meta name="date" content="2024-12-16" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="index.html"/>
+<link rel="next" href="time-series-graphics.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="https://otexts.com/fpp3/">Forecasting: Principles and Practice (3rd ed)</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="getting-started.html"><a href="getting-started.html"><i class="fa fa-check"></i><b>1</b> Getting started</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="getting-started.html"><a href="getting-started.html#what-can-be-forecast"><i class="fa fa-check"></i><b>1.1</b> What can be forecast?</a></li>
+<li class="chapter" data-level="1.2" data-path="getting-started.html"><a href="getting-started.html#forecasting-goals-and-planning"><i class="fa fa-check"></i><b>1.2</b> Forecasting, goals and planning</a></li>
+<li class="chapter" data-level="1.3" data-path="getting-started.html"><a href="getting-started.html#determining-what-to-forecast"><i class="fa fa-check"></i><b>1.3</b> Determining what to forecast</a></li>
+<li class="chapter" data-level="1.4" data-path="getting-started.html"><a href="getting-started.html#forecasting-data-and-methods"><i class="fa fa-check"></i><b>1.4</b> Forecasting data and methods</a></li>
+<li class="chapter" data-level="1.5" data-path="getting-started.html"><a href="getting-started.html#some-case-studies"><i class="fa fa-check"></i><b>1.5</b> Some case studies</a></li>
+<li class="chapter" data-level="1.6" data-path="getting-started.html"><a href="getting-started.html#the-basic-steps-in-a-forecasting-task"><i class="fa fa-check"></i><b>1.6</b> The basic steps in a forecasting task</a>
+<ul>
+<li class="chapter" data-level="1.6.1" data-path="getting-started.html"><a href="getting-started.html#summary-five-basic-steps-of-forecasting"><i class="fa fa-check"></i><b>1.6.1</b> Summary: Five Basic Steps of Forecasting</a></li>
+<li class="chapter" data-level="1.6.2" data-path="getting-started.html"><a href="getting-started.html#summary-five-basic-steps-of-forecasting-1"><i class="fa fa-check"></i><b>1.6.2</b> Summary: Five Basic Steps of Forecasting</a></li>
+</ul></li>
+<li class="chapter" data-level="1.7" data-path="getting-started.html"><a href="getting-started.html#the-statistical-forecasting-perspective"><i class="fa fa-check"></i><b>1.7</b> The statistical forecasting perspective</a></li>
+<li class="chapter" data-level="1.8" data-path="getting-started.html"><a href="getting-started.html#excercises"><i class="fa fa-check"></i><b>1.8</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="time-series-graphics.html"><a href="time-series-graphics.html"><i class="fa fa-check"></i><b>2</b> Time series graphics</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#tsibble-object"><i class="fa fa-check"></i><b>2.1</b> <code>tsibble</code> object</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-index-variable"><i class="fa fa-check"></i><b>2.1.1</b> The index variable</a></li>
+<li class="chapter" data-level="2.1.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-key-variable"><i class="fa fa-check"></i><b>2.1.2</b> The key variable</a></li>
+<li class="chapter" data-level="2.1.3" data-path="time-series-graphics.html"><a href="time-series-graphics.html#working-with-tsibble-object"><i class="fa fa-check"></i><b>2.1.3</b> Working with <code>tsibble</code> object</a></li>
+<li class="chapter" data-level="2.1.4" data-path="time-series-graphics.html"><a href="time-series-graphics.html#read-a-csv-file-and-convert-to-a-tsibble"><i class="fa fa-check"></i><b>2.1.4</b> Read a csv file and convert to a tsibble</a></li>
+<li class="chapter" data-level="2.1.5" data-path="time-series-graphics.html"><a href="time-series-graphics.html#the-seasonal-period"><i class="fa fa-check"></i><b>2.1.5</b> The seasonal period</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#time-plot"><i class="fa fa-check"></i><b>2.2</b> Time plot</a></li>
+<li class="chapter" data-level="2.3" data-path="time-series-graphics.html"><a href="time-series-graphics.html#time-series-patterns"><i class="fa fa-check"></i><b>2.3</b> Time series patterns</a></li>
+<li class="chapter" data-level="2.4" data-path="time-series-graphics.html"><a href="time-series-graphics.html#seasonal-plots"><i class="fa fa-check"></i><b>2.4</b> Seasonal plots</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#multiple-seasonal-periods"><i class="fa fa-check"></i><b>2.4.1</b> Multiple seasonal periods</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="time-series-graphics.html"><a href="time-series-graphics.html#seasonal-subseries-plots"><i class="fa fa-check"></i><b>2.5</b> Seasonal subseries plots</a>
+<ul>
+<li class="chapter" data-level="2.5.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#example-australian-holiday-tourism"><i class="fa fa-check"></i><b>2.5.1</b> Example: Australian holiday tourism</a></li>
+</ul></li>
+<li class="chapter" data-level="2.6" data-path="time-series-graphics.html"><a href="time-series-graphics.html#scatterplots"><i class="fa fa-check"></i><b>2.6</b> Scatterplots</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#correlation"><i class="fa fa-check"></i><b>2.6.1</b> Correlation</a></li>
+<li class="chapter" data-level="2.6.2" data-path="time-series-graphics.html"><a href="time-series-graphics.html#scatterplot-matrices"><i class="fa fa-check"></i><b>2.6.2</b> Scatterplot matrices</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="time-series-graphics.html"><a href="time-series-graphics.html#lag-plots"><i class="fa fa-check"></i><b>2.7</b> Lag plots</a></li>
+<li class="chapter" data-level="2.8" data-path="time-series-graphics.html"><a href="time-series-graphics.html#autocorrelation"><i class="fa fa-check"></i><b>2.8</b> Autocorrelation</a>
+<ul>
+<li class="chapter" data-level="2.8.1" data-path="time-series-graphics.html"><a href="time-series-graphics.html#trend-and-seasonality-in-acf-plots"><i class="fa fa-check"></i><b>2.8.1</b> Trend and seasonality in ACF plots</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="time-series-graphics.html"><a href="time-series-graphics.html#white-moise"><i class="fa fa-check"></i><b>2.9</b> White moise</a></li>
+<li class="chapter" data-level="2.10" data-path="time-series-graphics.html"><a href="time-series-graphics.html#excercises-1"><i class="fa fa-check"></i><b>2.10</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html"><i class="fa fa-check"></i><b>3</b> Time series decomposition</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#transformations-and-adjustments"><i class="fa fa-check"></i><b>3.1</b> Transformations and adjustments</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#calendar-adjustments"><i class="fa fa-check"></i><b>3.1.1</b> Calendar adjustments</a></li>
+<li class="chapter" data-level="3.1.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#population-adjustments"><i class="fa fa-check"></i><b>3.1.2</b> Population adjustments</a></li>
+<li class="chapter" data-level="3.1.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#inflation-adjustments"><i class="fa fa-check"></i><b>3.1.3</b> Inflation adjustments</a></li>
+<li class="chapter" data-level="3.1.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#mathematical-transformations"><i class="fa fa-check"></i><b>3.1.4</b> Mathematical transformations</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#time-series-components"><i class="fa fa-check"></i><b>3.2</b> Time series components</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#seasonally-adjusted-data"><i class="fa fa-check"></i><b>3.2.1</b> Seasonally adjusted data</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-averages"><i class="fa fa-check"></i><b>3.3</b> Moving averages</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-average-smoothing"><i class="fa fa-check"></i><b>3.3.1</b> Moving average smoothing</a></li>
+<li class="chapter" data-level="3.3.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#moving-averages-of-moving-averages"><i class="fa fa-check"></i><b>3.3.2</b> Moving averages of moving averages</a></li>
+<li class="chapter" data-level="3.3.3" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#estimating-the-trend-cycle-with-seasonal-data"><i class="fa fa-check"></i><b>3.3.3</b> Estimating the trend-cycle with seasonal data</a></li>
+<li class="chapter" data-level="3.3.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#example-employment-in-the-us-retail-sector"><i class="fa fa-check"></i><b>3.3.4</b> Example: Employment in the US retail sector</a></li>
+<li class="chapter" data-level="3.3.5" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#weighted-moving-averages"><i class="fa fa-check"></i><b>3.3.5</b> Weighted moving averages</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#classical-decomposition"><i class="fa fa-check"></i><b>3.4</b> Classical decomposition</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#additive-decomposition"><i class="fa fa-check"></i><b>3.4.1</b> Additive decomposition</a></li>
+<li class="chapter" data-level="3.4.2" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#multiplicative-decomposition"><i class="fa fa-check"></i><b>3.4.2</b> Multiplicative decomposition</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="time-series-decomposition.html"><a href="time-series-decomposition.html#excercises-2"><i class="fa fa-check"></i><b>3.5</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="time-series-features.html"><a href="time-series-features.html"><i class="fa fa-check"></i><b>4</b> Time series features</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="time-series-features.html"><a href="time-series-features.html#some-simple-statistics"><i class="fa fa-check"></i><b>4.1</b> Some simple statistics</a>
+<ul>
+<li class="chapter" data-level="4.1.1" data-path="time-series-features.html"><a href="time-series-features.html#acf-features"><i class="fa fa-check"></i><b>4.1.1</b> ACF features</a></li>
+<li class="chapter" data-level="4.1.2" data-path="time-series-features.html"><a href="time-series-features.html#stl-features"><i class="fa fa-check"></i><b>4.1.2</b> STL features</a></li>
+<li class="chapter" data-level="4.1.3" data-path="time-series-features.html"><a href="time-series-features.html#other-features"><i class="fa fa-check"></i><b>4.1.3</b> Other features</a></li>
+</ul></li>
+<li class="chapter" data-level="4.2" data-path="time-series-features.html"><a href="time-series-features.html#exploring-australian-tourism-data"><i class="fa fa-check"></i><b>4.2</b> Exploring Australian tourism data</a></li>
+<li class="chapter" data-level="4.3" data-path="time-series-features.html"><a href="time-series-features.html#exercises"><i class="fa fa-check"></i><b>4.3</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html"><i class="fa fa-check"></i><b>5</b> The forecaster’s toolbox</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#a-tidy-forecasting-workflow"><i class="fa fa-check"></i><b>5.1</b> A tidy forecasting workflow</a>
+<ul>
+<li class="chapter" data-level="5.1.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#data-preparation-tidy"><i class="fa fa-check"></i><b>5.1.1</b> Data preparation (tidy)</a></li>
+<li class="chapter" data-level="5.1.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#plot-the-data-visualise"><i class="fa fa-check"></i><b>5.1.2</b> Plot the data (visualise)</a></li>
+<li class="chapter" data-level="5.1.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#define-a-model-specify"><i class="fa fa-check"></i><b>5.1.3</b> Define a model (specify)</a></li>
+<li class="chapter" data-level="5.1.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#train-the-model-estimate"><i class="fa fa-check"></i><b>5.1.4</b> Train the model (estimate)</a></li>
+<li class="chapter" data-level="5.1.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#check-model-performance-evaluate"><i class="fa fa-check"></i><b>5.1.5</b> Check model performance (evaluate)</a></li>
+<li class="chapter" data-level="5.1.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#produce-forecasts-forecast"><i class="fa fa-check"></i><b>5.1.6</b> Produce forecasts (forecast)</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#some-simple-forecasting-methods"><i class="fa fa-check"></i><b>5.2</b> Some simple forecasting methods</a>
+<ul>
+<li class="chapter" data-level="5.2.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#mean-method"><i class="fa fa-check"></i><b>5.2.1</b> Mean method</a></li>
+<li class="chapter" data-level="5.2.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#naiïve-method"><i class="fa fa-check"></i><b>5.2.2</b> Naiïve method</a></li>
+<li class="chapter" data-level="5.2.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#seasonal-naïve-method"><i class="fa fa-check"></i><b>5.2.3</b> Seasonal naïve method</a></li>
+<li class="chapter" data-level="5.2.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#drift-method"><i class="fa fa-check"></i><b>5.2.4</b> Drift method</a></li>
+<li class="chapter" data-level="5.2.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#model-fitting"><i class="fa fa-check"></i><b>5.2.5</b> Model fitting</a></li>
+<li class="chapter" data-level="5.2.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#producing-forecasts"><i class="fa fa-check"></i><b>5.2.6</b> Producing forecasts</a></li>
+<li class="chapter" data-level="5.2.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#visualising-forecasts"><i class="fa fa-check"></i><b>5.2.7</b> Visualising forecasts</a></li>
+<li class="chapter" data-level="5.2.8" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-facebook-closing-stock-price"><i class="fa fa-check"></i><b>5.2.8</b> Example: Facebook closing stock price</a></li>
+<li class="chapter" data-level="5.2.9" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-australian-quarterly-beer-production"><i class="fa fa-check"></i><b>5.2.9</b> Example: Australian quarterly beer production</a></li>
+<li class="chapter" data-level="5.2.10" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-googles-daily-closing-stock-price"><i class="fa fa-check"></i><b>5.2.10</b> Example: Google’s daily closing stock price</a></li>
+</ul></li>
+<li class="chapter" data-level="5.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#fitted-values-and-residuals"><i class="fa fa-check"></i><b>5.3</b> Fitted values and residuals</a>
+<ul>
+<li class="chapter" data-level="5.3.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#fitted-values"><i class="fa fa-check"></i><b>5.3.1</b> Fitted values</a></li>
+<li class="chapter" data-level="5.3.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#residuals"><i class="fa fa-check"></i><b>5.3.2</b> Residuals</a></li>
+</ul></li>
+<li class="chapter" data-level="5.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#residual-diagnostics"><i class="fa fa-check"></i><b>5.4</b> Residual diagnostics</a>
+<ul>
+<li class="chapter" data-level="5.4.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#acf-of-residuals"><i class="fa fa-check"></i><b>5.4.1</b> ACF of residuals</a></li>
+<li class="chapter" data-level="5.4.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-forecasting-google-daily-closing-stock-prices"><i class="fa fa-check"></i><b>5.4.2</b> Example: Forecasting Google daily closing stock prices</a></li>
+<li class="chapter" data-level="5.4.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#portmanteau-tests-for-autocorrelation"><i class="fa fa-check"></i><b>5.4.3</b> Portmanteau tests for autocorrelation</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#distributional-forecasts-and-prediction-intervals"><i class="fa fa-check"></i><b>5.5</b> Distributional forecasts and prediction intervals</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecast-distributions"><i class="fa fa-check"></i><b>5.5.1</b> Forecast distributions</a></li>
+<li class="chapter" data-level="5.5.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#prediction-intervals"><i class="fa fa-check"></i><b>5.5.2</b> Prediction intervals</a></li>
+<li class="chapter" data-level="5.5.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#one-step-prediction-intervals"><i class="fa fa-check"></i><b>5.5.3</b> One-step prediction intervals</a></li>
+<li class="chapter" data-level="5.5.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#multi-step-prediction-intervals"><i class="fa fa-check"></i><b>5.5.4</b> Multi-step prediction intervals</a></li>
+<li class="chapter" data-level="5.5.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#benchmark-methods"><i class="fa fa-check"></i><b>5.5.5</b> Benchmark methods</a></li>
+<li class="chapter" data-level="5.5.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#prediction-intervals-from-bootstrapped-residuals"><i class="fa fa-check"></i><b>5.5.6</b> Prediction intervals from bootstrapped residuals</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecasting-using-transformations"><i class="fa fa-check"></i><b>5.6</b> Forecasting using transformations</a></li>
+<li class="chapter" data-level="5.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecasting-with-decomposition"><i class="fa fa-check"></i><b>5.7</b> Forecasting with decomposition</a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-employment-in-the-us-retail-sector-1"><i class="fa fa-check"></i><b>5.7.1</b> Example: Employment in the US retail sector</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#evaluating-point-forecast-accuracy"><i class="fa fa-check"></i><b>5.8</b> Evaluating point forecast accuracy</a>
+<ul>
+<li class="chapter" data-level="5.8.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#training-and-test-sets"><i class="fa fa-check"></i><b>5.8.1</b> Training and test sets</a></li>
+<li class="chapter" data-level="5.8.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#functions-to-subset-a-time-series"><i class="fa fa-check"></i><b>5.8.2</b> Functions to subset a time series</a></li>
+<li class="chapter" data-level="5.8.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#forecast-errors"><i class="fa fa-check"></i><b>5.8.3</b> Forecast errors</a></li>
+<li class="chapter" data-level="5.8.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scale-dependent-errors"><i class="fa fa-check"></i><b>5.8.4</b> Scale-dependent errors</a></li>
+<li class="chapter" data-level="5.8.5" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#percentage-errors"><i class="fa fa-check"></i><b>5.8.5</b> Percentage errors</a></li>
+<li class="chapter" data-level="5.8.6" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scaled-errors"><i class="fa fa-check"></i><b>5.8.6</b> Scaled errors</a></li>
+<li class="chapter" data-level="5.8.7" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#examples"><i class="fa fa-check"></i><b>5.8.7</b> Examples</a></li>
+</ul></li>
+<li class="chapter" data-level="5.9" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#evaluating-distributional-forecast-accuracy"><i class="fa fa-check"></i><b>5.9</b> Evaluating distributional forecast accuracy</a>
+<ul>
+<li class="chapter" data-level="5.9.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#quantile-scores"><i class="fa fa-check"></i><b>5.9.1</b> Quantile scores</a></li>
+<li class="chapter" data-level="5.9.2" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#winkler-score"><i class="fa fa-check"></i><b>5.9.2</b> Winkler Score</a></li>
+<li class="chapter" data-level="5.9.3" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#continuous-ranked-probability-score"><i class="fa fa-check"></i><b>5.9.3</b> Continuous Ranked Probability Score</a></li>
+<li class="chapter" data-level="5.9.4" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#scale-free-comparisons-using-skill-scores"><i class="fa fa-check"></i><b>5.9.4</b> Scale-free comparisons using skill scores</a></li>
+</ul></li>
+<li class="chapter" data-level="5.10" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#time-series-cross-validation"><i class="fa fa-check"></i><b>5.10</b> Time series cross-validation</a>
+<ul>
+<li class="chapter" data-level="5.10.1" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#example-forecast-horizon-accuracy-with-cross-validation"><i class="fa fa-check"></i><b>5.10.1</b> Example: Forecast horizon accuracy with cross-validation</a></li>
+</ul></li>
+<li class="chapter" data-level="5.11" data-path="the-forecasters-toolbox.html"><a href="the-forecasters-toolbox.html#exercises-1"><i class="fa fa-check"></i><b>5.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html"><i class="fa fa-check"></i><b>6</b> Judgmental forecasts</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#beware-of-limitations"><i class="fa fa-check"></i><b>6.1</b> Beware of limitations</a></li>
+<li class="chapter" data-level="6.2" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#key-principles"><i class="fa fa-check"></i><b>6.2</b> Key principles</a></li>
+<li class="chapter" data-level="6.3" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#the-delphi-method"><i class="fa fa-check"></i><b>6.3</b> The Delphi method</a></li>
+<li class="chapter" data-level="6.4" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#forecasting-by-analogy"><i class="fa fa-check"></i><b>6.4</b> Forecasting by analogy</a></li>
+<li class="chapter" data-level="6.5" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#scenario-forecasting"><i class="fa fa-check"></i><b>6.5</b> Scenario forecasting</a></li>
+<li class="chapter" data-level="6.6" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#new-product-forecasting"><i class="fa fa-check"></i><b>6.6</b> New product forecasting</a></li>
+<li class="chapter" data-level="6.7" data-path="judgmental-forecasts.html"><a href="judgmental-forecasts.html#judgmental-adjustments"><i class="fa fa-check"></i><b>6.7</b> Judgmental adjustments</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html"><i class="fa fa-check"></i><b>7</b> Time series regression models</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#the-linear-model"><i class="fa fa-check"></i><b>7.1</b> The linear model</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#simple-linear-regression"><i class="fa fa-check"></i><b>7.1.1</b> Simple linear regression</a></li>
+<li class="chapter" data-level="7.1.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#multiple-linear-regression"><i class="fa fa-check"></i><b>7.1.2</b> Multiple linear regression</a></li>
+<li class="chapter" data-level="7.1.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#assumptions"><i class="fa fa-check"></i><b>7.1.3</b> Assumptions</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#least-squares-estimation"><i class="fa fa-check"></i><b>7.2</b> Least squares estimation</a>
+<ul>
+<li class="chapter" data-level="7.2.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#fitted-values-1"><i class="fa fa-check"></i><b>7.2.1</b> Fitted values</a></li>
+<li class="chapter" data-level="7.2.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#goodness-of-fit"><i class="fa fa-check"></i><b>7.2.2</b> Goodness-of-fit</a></li>
+<li class="chapter" data-level="7.2.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#standard-error-of-the-regression"><i class="fa fa-check"></i><b>7.2.3</b> Standard error of the regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#evaluating-the-regression-model"><i class="fa fa-check"></i><b>7.3</b> Evaluating the regression model</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#acf-plot-of-residuals"><i class="fa fa-check"></i><b>7.3.1</b> ACF plot of residuals</a></li>
+<li class="chapter" data-level="7.3.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#histogram-of-residuals"><i class="fa fa-check"></i><b>7.3.2</b> Histogram of residuals</a></li>
+<li class="chapter" data-level="7.3.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#residual-plots-against-predictors"><i class="fa fa-check"></i><b>7.3.3</b> Residual plots against predictors</a></li>
+<li class="chapter" data-level="7.3.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#residual-plots-against-fitted-values"><i class="fa fa-check"></i><b>7.3.4</b> Residual plots against fitted values</a></li>
+<li class="chapter" data-level="7.3.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#outliers-and-influential-observations"><i class="fa fa-check"></i><b>7.3.5</b> Outliers and influential observations</a></li>
+<li class="chapter" data-level="7.3.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#spurious-regression"><i class="fa fa-check"></i><b>7.3.6</b> Spurious regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#some-useful-predictors"><i class="fa fa-check"></i><b>7.4</b> Some useful predictors</a>
+<ul>
+<li class="chapter" data-level="7.4.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#trend"><i class="fa fa-check"></i><b>7.4.1</b> Trend</a></li>
+<li class="chapter" data-level="7.4.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#dummy-variables"><i class="fa fa-check"></i><b>7.4.2</b> Dummy variables</a></li>
+<li class="chapter" data-level="7.4.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#seasonal-dummy-variables"><i class="fa fa-check"></i><b>7.4.3</b> Seasonal dummy variables</a></li>
+<li class="chapter" data-level="7.4.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#intervention-variables"><i class="fa fa-check"></i><b>7.4.4</b> Intervention variables</a></li>
+<li class="chapter" data-level="7.4.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#trading-days"><i class="fa fa-check"></i><b>7.4.5</b> Trading days</a></li>
+<li class="chapter" data-level="7.4.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#distributed-lags"><i class="fa fa-check"></i><b>7.4.6</b> Distributed lags</a></li>
+</ul></li>
+<li class="chapter" data-level="7.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#selecting-predictors"><i class="fa fa-check"></i><b>7.5</b> Selecting predictors</a>
+<ul>
+<li class="chapter" data-level="7.5.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#adjusted-r2"><i class="fa fa-check"></i><b>7.5.1</b> Adjusted <span class="math inline">\(R^2\)</span></a></li>
+<li class="chapter" data-level="7.5.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#cross-validation"><i class="fa fa-check"></i><b>7.5.2</b> Cross-validation</a></li>
+<li class="chapter" data-level="7.5.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#akaikes-information-criterion"><i class="fa fa-check"></i><b>7.5.3</b> Akaike’s Information Criterion</a></li>
+<li class="chapter" data-level="7.5.4" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#corrected-akaikes-information-criterion"><i class="fa fa-check"></i><b>7.5.4</b> Corrected Akaike’s Information Criterion</a></li>
+<li class="chapter" data-level="7.5.5" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#schwarzs-bayesian-information-criterion"><i class="fa fa-check"></i><b>7.5.5</b> Schwarz’s Bayesian Information Criterion</a></li>
+<li class="chapter" data-level="7.5.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#stepwise-regression"><i class="fa fa-check"></i><b>7.5.6</b> Stepwise regression</a></li>
+</ul></li>
+<li class="chapter" data-level="7.6" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-regression"><i class="fa fa-check"></i><b>7.6</b> Forecasting with regression</a>
+<ul>
+<li class="chapter" data-level="7.6.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#scenario-based-forecasting"><i class="fa fa-check"></i><b>7.6.1</b> Scenario based forecasting</a></li>
+<li class="chapter" data-level="7.6.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#prediction-intervals-1"><i class="fa fa-check"></i><b>7.6.2</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="7.7" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#nonlinear-regression"><i class="fa fa-check"></i><b>7.7</b> Nonlinear regression</a>
+<ul>
+<li class="chapter" data-level="7.7.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-a-nonlinear-trend"><i class="fa fa-check"></i><b>7.7.1</b> Forecasting with a nonlinear trend</a></li>
+</ul></li>
+<li class="chapter" data-level="7.8" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#correlation-causation-and-forecasting"><i class="fa fa-check"></i><b>7.8</b> Correlation, causation and forecasting</a>
+<ul>
+<li class="chapter" data-level="7.8.1" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#correlation-is-not-causation"><i class="fa fa-check"></i><b>7.8.1</b> Correlation is not causation</a></li>
+<li class="chapter" data-level="7.8.2" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#forecasting-with-correlated-predictors"><i class="fa fa-check"></i><b>7.8.2</b> Forecasting with correlated predictors</a></li>
+<li class="chapter" data-level="7.8.3" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#multicollinearity-and-forecasting"><i class="fa fa-check"></i><b>7.8.3</b> Multicollinearity and forecasting</a></li>
+</ul></li>
+<li class="chapter" data-level="7.9" data-path="time-series-regression-models.html"><a href="time-series-regression-models.html#exercises-2"><i class="fa fa-check"></i><b>7.9</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html"><i class="fa fa-check"></i><b>8</b> Exponential Smoothing</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#simple-exponential-smoothing"><i class="fa fa-check"></i><b>8.1</b> Simple exponential smoothing</a>
+<ul>
+<li class="chapter" data-level="8.1.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#weighted-average-form"><i class="fa fa-check"></i><b>8.1.1</b> Weighted average form</a></li>
+<li class="chapter" data-level="8.1.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#component-form"><i class="fa fa-check"></i><b>8.1.2</b> Component form</a></li>
+<li class="chapter" data-level="8.1.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#flat-forecast"><i class="fa fa-check"></i><b>8.1.3</b> Flat forecast</a></li>
+<li class="chapter" data-level="8.1.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#optimisation"><i class="fa fa-check"></i><b>8.1.4</b> Optimisation</a></li>
+<li class="chapter" data-level="8.1.5" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-algerian-exports"><i class="fa fa-check"></i><b>8.1.5</b> Example: Algerian exports</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#methods-with-trend"><i class="fa fa-check"></i><b>8.2</b> Methods with trend</a>
+<ul>
+<li class="chapter" data-level="8.2.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holts-linear-trend-method"><i class="fa fa-check"></i><b>8.2.1</b> Holt’s linear trend method</a></li>
+<li class="chapter" data-level="8.2.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#damped-trend-methods"><i class="fa fa-check"></i><b>8.2.2</b> Damped trend methods</a></li>
+</ul></li>
+<li class="chapter" data-level="8.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#methods-with-seasonality"><i class="fa fa-check"></i><b>8.3</b> Methods with seasonality</a>
+<ul>
+<li class="chapter" data-level="8.3.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-additive-method"><i class="fa fa-check"></i><b>8.3.1</b> Holt-Winters’ additive method</a></li>
+<li class="chapter" data-level="8.3.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-multiplicative-method"><i class="fa fa-check"></i><b>8.3.2</b> Holt-Winters’ multiplicative method</a></li>
+<li class="chapter" data-level="8.3.3" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-domestic-overnight-trips-in-australia"><i class="fa fa-check"></i><b>8.3.3</b> Example: Domestic overnight trips in Australia</a></li>
+<li class="chapter" data-level="8.3.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#holt-winters-damped-method"><i class="fa fa-check"></i><b>8.3.4</b> Holt-Winters’ damped method</a></li>
+</ul></li>
+<li class="chapter" data-level="8.4" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#a-taxonomy-of-exponential-smoothing-methods"><i class="fa fa-check"></i><b>8.4</b> A taxonomy of exponential smoothing methods</a></li>
+<li class="chapter" data-level="8.5" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#innovations-state-space-models-for-exponential-smoothing"><i class="fa fa-check"></i><b>8.5</b> Innovations state space models for exponential smoothing</a></li>
+<li class="chapter" data-level="8.6" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#estimation-and-model-selection"><i class="fa fa-check"></i><b>8.6</b> Estimation and model selection</a>
+<ul>
+<li class="chapter" data-level="8.6.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#model-selection"><i class="fa fa-check"></i><b>8.6.1</b> Model selection</a></li>
+<li class="chapter" data-level="8.6.2" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#example-domestic-holiday-tourist-visitor-nights-in-australia"><i class="fa fa-check"></i><b>8.6.2</b> Example: Domestic holiday tourist visitor nights in Australia</a></li>
+</ul></li>
+<li class="chapter" data-level="8.7" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#forecasting-with-ets-models"><i class="fa fa-check"></i><b>8.7</b> Forecasting with ETS models</a>
+<ul>
+<li class="chapter" data-level="8.7.1" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#prediction-intervals-2"><i class="fa fa-check"></i><b>8.7.1</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="8.8" data-path="exponential-smoothing.html"><a href="exponential-smoothing.html#excercises-3"><i class="fa fa-check"></i><b>8.8</b> Excercises</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="arima-models.html"><a href="arima-models.html"><i class="fa fa-check"></i><b>9</b> ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="arima-models.html"><a href="arima-models.html#stationarity-and-differencing"><i class="fa fa-check"></i><b>9.1</b> Stationarity and differencing</a>
+<ul>
+<li class="chapter" data-level="9.1.1" data-path="arima-models.html"><a href="arima-models.html#differencing"><i class="fa fa-check"></i><b>9.1.1</b> Differencing</a></li>
+<li class="chapter" data-level="9.1.2" data-path="arima-models.html"><a href="arima-models.html#second-order-differencing"><i class="fa fa-check"></i><b>9.1.2</b> Second-order differencing</a></li>
+<li class="chapter" data-level="9.1.3" data-path="arima-models.html"><a href="arima-models.html#seasonal-differencing"><i class="fa fa-check"></i><b>9.1.3</b> Seasonal differencing</a></li>
+<li class="chapter" data-level="9.1.4" data-path="arima-models.html"><a href="arima-models.html#unit-root-tests"><i class="fa fa-check"></i><b>9.1.4</b> Unit root tests</a></li>
+</ul></li>
+<li class="chapter" data-level="9.2" data-path="arima-models.html"><a href="arima-models.html#backshift-notation"><i class="fa fa-check"></i><b>9.2</b> Backshift notation</a></li>
+<li class="chapter" data-level="9.3" data-path="arima-models.html"><a href="arima-models.html#autoregressive-ar-models"><i class="fa fa-check"></i><b>9.3</b> Autoregressive (AR) models</a>
+<ul>
+<li class="chapter" data-level="9.3.1" data-path="arima-models.html"><a href="arima-models.html#ar1-model"><i class="fa fa-check"></i><b>9.3.1</b> AR(1) model</a></li>
+<li class="chapter" data-level="9.3.2" data-path="arima-models.html"><a href="arima-models.html#ar2-model"><i class="fa fa-check"></i><b>9.3.2</b> AR(2) model</a></li>
+</ul></li>
+<li class="chapter" data-level="9.4" data-path="arima-models.html"><a href="arima-models.html#moving-average-models"><i class="fa fa-check"></i><b>9.4</b> Moving average models</a></li>
+<li class="chapter" data-level="9.5" data-path="arima-models.html"><a href="arima-models.html#non-seasonal-arima-models"><i class="fa fa-check"></i><b>9.5</b> Non-seasonal ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="arima-models.html"><a href="arima-models.html#example-egyptian-exports"><i class="fa fa-check"></i><b>9.5.1</b> Example: Egyptian exports</a></li>
+<li class="chapter" data-level="9.5.2" data-path="arima-models.html"><a href="arima-models.html#acf-and-pacf-plots"><i class="fa fa-check"></i><b>9.5.2</b> ACF and PACF plots</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="arima-models.html"><a href="arima-models.html#estimation-and-order-selection"><i class="fa fa-check"></i><b>9.6</b> Estimation and order selection</a></li>
+<li class="chapter" data-level="9.7" data-path="arima-models.html"><a href="arima-models.html#arima-modelling-in-fable"><i class="fa fa-check"></i><b>9.7</b> ARIMA modelling in <code>fable</code></a>
+<ul>
+<li class="chapter" data-level="9.7.1" data-path="arima-models.html"><a href="arima-models.html#how-does-arima-work"><i class="fa fa-check"></i><b>9.7.1</b> How does ARIMA() work?</a></li>
+<li class="chapter" data-level="9.7.2" data-path="arima-models.html"><a href="arima-models.html#modelling-procedure"><i class="fa fa-check"></i><b>9.7.2</b> Modelling procedure</a></li>
+<li class="chapter" data-level="9.7.3" data-path="arima-models.html"><a href="arima-models.html#example-central-african-republic-exports"><i class="fa fa-check"></i><b>9.7.3</b> Example: Central African Republic exports</a></li>
+</ul></li>
+<li class="chapter" data-level="9.8" data-path="arima-models.html"><a href="arima-models.html#forecasting"><i class="fa fa-check"></i><b>9.8</b> Forecasting</a>
+<ul>
+<li class="chapter" data-level="9.8.1" data-path="arima-models.html"><a href="arima-models.html#prediction-intervals-3"><i class="fa fa-check"></i><b>9.8.1</b> Prediction intervals</a></li>
+</ul></li>
+<li class="chapter" data-level="9.9" data-path="arima-models.html"><a href="arima-models.html#seasonal-arima-models"><i class="fa fa-check"></i><b>9.9</b> Seasonal ARIMA models</a>
+<ul>
+<li class="chapter" data-level="9.9.1" data-path="arima-models.html"><a href="arima-models.html#arima-model-notation"><i class="fa fa-check"></i><b>9.9.1</b> ARIMA Model Notation</a></li>
+<li class="chapter" data-level="9.9.2" data-path="arima-models.html"><a href="arima-models.html#acfpacf"><i class="fa fa-check"></i><b>9.9.2</b> ACF/PACF</a></li>
+<li class="chapter" data-level="9.9.3" data-path="arima-models.html"><a href="arima-models.html#example-monthly-us-leisure-and-hospitality-employment"><i class="fa fa-check"></i><b>9.9.3</b> Example: Monthly US leisure and hospitality employment</a></li>
+</ul></li>
+<li class="chapter" data-level="9.10" data-path="arima-models.html"><a href="arima-models.html#arima-vs-ets"><i class="fa fa-check"></i><b>9.10</b> ARIMA vs ETS</a>
+<ul>
+<li class="chapter" data-level="9.10.1" data-path="arima-models.html"><a href="arima-models.html#comparing-arima-and-ets-on-non-seasonal-data"><i class="fa fa-check"></i><b>9.10.1</b> Comparing <code>ARIMA()</code> and <code>ETS()</code> on non-seasonal data</a></li>
+<li class="chapter" data-level="9.10.2" data-path="arima-models.html"><a href="arima-models.html#comparing-arima-and-ets-on-seasonal-data"><i class="fa fa-check"></i><b>9.10.2</b> Comparing <code>ARIMA()</code> and <code>ETS()</code> on seasonal data</a></li>
+</ul></li>
+<li class="chapter" data-level="9.11" data-path="arima-models.html"><a href="arima-models.html#exercises-3"><i class="fa fa-check"></i><b>9.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html"><i class="fa fa-check"></i><b>10</b> Dynamic regression models</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#regression-with-arima-errors-using-fable"><i class="fa fa-check"></i><b>10.1</b> Regression with ARIMA errors using <code>fable</code></a>
+<ul>
+<li class="chapter" data-level="10.1.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-us-personal-consumption-and-income"><i class="fa fa-check"></i><b>10.1.1</b> Example: US Personal Consumption and Income</a></li>
+</ul></li>
+<li class="chapter" data-level="10.2" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#forecasting-1"><i class="fa fa-check"></i><b>10.2</b> Forecasting</a>
+<ul>
+<li class="chapter" data-level="10.2.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-us-personal-consumption-and-income-1"><i class="fa fa-check"></i><b>10.2.1</b> Example: US Personal Consumption and Income</a></li>
+<li class="chapter" data-level="10.2.2" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-forecasting-electricity-demand"><i class="fa fa-check"></i><b>10.2.2</b> Example: Forecasting electricity demand</a></li>
+</ul></li>
+<li class="chapter" data-level="10.3" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#stochastic-and-deterministic-trends"><i class="fa fa-check"></i><b>10.3</b> Stochastic and deterministic trends</a>
+<ul>
+<li class="chapter" data-level="10.3.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-air-transport-passengers-australia"><i class="fa fa-check"></i><b>10.3.1</b> Example: Air transport passengers Australia</a></li>
+</ul></li>
+<li class="chapter" data-level="10.4" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#dynamic-harmonic-regression"><i class="fa fa-check"></i><b>10.4</b> Dynamic harmonic regression</a></li>
+<li class="chapter" data-level="10.5" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-australian-eating-out-expenditure"><i class="fa fa-check"></i><b>10.5</b> Example: Australian eating out expenditure</a></li>
+<li class="chapter" data-level="10.6" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#lagged-predictors"><i class="fa fa-check"></i><b>10.6</b> Lagged predictors</a>
+<ul>
+<li class="chapter" data-level="10.6.1" data-path="dynamic-regression-models.html"><a href="dynamic-regression-models.html#example-tv-advertising-and-insurance-quotations"><i class="fa fa-check"></i><b>10.6.1</b> Example: TV advertising and insurance quotations</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html"><i class="fa fa-check"></i><b>11</b> Forecasting hierarchical and grouped time series</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#hierarchical-and-grouped-time-series"><i class="fa fa-check"></i><b>11.1</b> Hierarchical and grouped time series</a>
+<ul>
+<li class="chapter" data-level="11.1.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#hierarchical-time-series"><i class="fa fa-check"></i><b>11.1.1</b> Hierarchical time series</a></li>
+<li class="chapter" data-level="11.1.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#example-australian-tourism-hierarchy"><i class="fa fa-check"></i><b>11.1.2</b> Example: Australian tourism hierarchy</a></li>
+<li class="chapter" data-level="11.1.3" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#grouped-time-series"><i class="fa fa-check"></i><b>11.1.3</b> Grouped time series</a></li>
+<li class="chapter" data-level="11.1.4" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#example-australian-prison-population"><i class="fa fa-check"></i><b>11.1.4</b> Example: Australian prison population</a></li>
+<li class="chapter" data-level="11.1.5" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#mixed-hierarchical-and-grouped-structure"><i class="fa fa-check"></i><b>11.1.5</b> Mixed hierarchical and grouped structure</a></li>
+</ul></li>
+<li class="chapter" data-level="11.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#single-level-approaches"><i class="fa fa-check"></i><b>11.2</b> Single level approaches</a>
+<ul>
+<li class="chapter" data-level="11.2.1" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#the-bottom-up-approach"><i class="fa fa-check"></i><b>11.2.1</b> The bottom-up approach</a></li>
+<li class="chapter" data-level="11.2.2" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#top-down-approaches"><i class="fa fa-check"></i><b>11.2.2</b> Top-down approaches</a></li>
+</ul></li>
+<li class="chapter" data-level="11.3" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecast-reconciliation"><i class="fa fa-check"></i><b>11.3</b> Forecast reconciliation</a></li>
+<li class="chapter" data-level="11.4" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecasting-australian-domestic-tourism"><i class="fa fa-check"></i><b>11.4</b> Forecasting Australian domestic tourism</a></li>
+<li class="chapter" data-level="11.5" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#reconciled-distributional-forecasts"><i class="fa fa-check"></i><b>11.5</b> Reconciled distributional forecasts</a></li>
+<li class="chapter" data-level="11.6" data-path="forecasting-hierarchical-and-grouped-time-series.html"><a href="forecasting-hierarchical-and-grouped-time-series.html#forecasting-australian-prison-population"><i class="fa fa-check"></i><b>11.6</b> Forecasting Australian prison population</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html"><i class="fa fa-check"></i><b>12</b> Advanced forecasting methods</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#complex-seasonality"><i class="fa fa-check"></i><b>12.1</b> Complex seasonality</a>
+<ul>
+<li class="chapter" data-level="12.1.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#stl-with-multiple-seasonal-periods"><i class="fa fa-check"></i><b>12.1.1</b> STL with multiple seasonal periods</a></li>
+</ul></li>
+<li class="chapter" data-level="12.2" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#prophet-model"><i class="fa fa-check"></i><b>12.2</b> Prophet model</a>
+<ul>
+<li class="chapter" data-level="12.2.1" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#example-quarterly-cement-production"><i class="fa fa-check"></i><b>12.2.1</b> Example: Quarterly cement production</a></li>
+<li class="chapter" data-level="12.2.2" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#example-half-hourly-electricity-demand"><i class="fa fa-check"></i><b>12.2.2</b> Example: Half-hourly electricity demand</a></li>
+</ul></li>
+<li class="chapter" data-level="12.3" data-path="advanced-forecasting-methods.html"><a href="advanced-forecasting-methods.html#vector-autoregressions"><i class="fa fa-check"></i><b>12.3</b> Vector autoregressions</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/daluchkin?tab=repositories">All Repositories</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Forecasting: Principles and Practice (3rd ed)</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="getting-started" class="section level1 hasAnchor" number="1">
+<h1><span class="header-section-number">Chapter 1</span> Getting started<a href="getting-started.html#getting-started" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="what-can-be-forecast" class="section level2 hasAnchor" number="1.1">
+<h2><span class="header-section-number">1.1</span> What can be forecast?<a href="getting-started.html#what-can-be-forecast" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>The predictability of an event or a quantity depends on several factors including:</p>
+<ul>
+<li>how well we understand the factors that contribute to it;</li>
+<li>how much data is available;</li>
+<li>how similar the future is to the past;</li>
+<li>whether the forecasts can affect the thing we are trying to forecast.</li>
+</ul>
+</blockquote>
+</div>
+<div id="forecasting-goals-and-planning" class="section level2 hasAnchor" number="1.2">
+<h2><span class="header-section-number">1.2</span> Forecasting, goals and planning<a href="getting-started.html#forecasting-goals-and-planning" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Forecasting predicts future events using historical data to inform business decisions. It’s distinct from:</p>
+<ul>
+<li><strong>Goals:</strong> Desired outcomes.</li>
+<li><strong>Planning:</strong> Actions to meet forecasts and goals.</li>
+</ul>
+<p>Types of Forecasts:</p>
+<ul>
+<li><strong>Short-term:</strong> For scheduling.</li>
+<li><strong>Medium-term:</strong> For resource planning.</li>
+<li><strong>Long-term:</strong> For strategic planning (market opportunities, resources).</li>
+</ul>
+<p>A good forecasting system involves selecting the right methods, refining them over time, and having strong organizational support.</p>
+</div>
+<div id="determining-what-to-forecast" class="section level2 hasAnchor" number="1.3">
+<h2><span class="header-section-number">1.3</span> Determining what to forecast<a href="getting-started.html#determining-what-to-forecast" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Ask which dimensions the forecast needs to cover, such as:</p>
+<ul>
+<li>Product group</li>
+<li>Product line</li>
+<li>Total sales or by region, etc.</li>
+</ul>
+<p>Determine whether the required data should be weekly, monthly, or yearly, depending on the specifics.</p>
+<p>Consider the forecast horizon: one month in advance, for 6 months, or for 10 years.</p>
+</div>
+<div id="forecasting-data-and-methods" class="section level2 hasAnchor" number="1.4">
+<h2><span class="header-section-number">1.4</span> Forecasting data and methods<a href="getting-started.html#forecasting-data-and-methods" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>The appropriate forecasting methods depend largely on what data are available.</p>
+</blockquote>
+<p>This chapter explains that forecasting methods depend on available data:</p>
+<ul>
+<li><strong>Qualitative methods</strong> are used when no data is available.</li>
+<li><strong>Quantitative methods</strong>_ are applied when past data exists and patterns are expected to continue, with a focus on time series forecasting (e.g., stock prices, sales, demand).</li>
+</ul>
+<p><strong>Time series</strong> models predict future values based on trends and seasonal component, while <strong>explanatory models</strong> incorporate external factors. <strong>Mixed models</strong> combine both approaches.</p>
+<p>The choice of model depends on data, system complexity, and forecast goals, with time series models often preferred for their simplicity and accuracy.</p>
+</div>
+<div id="some-case-studies" class="section level2 hasAnchor" number="1.5">
+<h2><span class="header-section-number">1.5</span> Some case studies<a href="getting-started.html#some-case-studies" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p><a href="https://otexts.com/fpp3/case-studies.html">See the source</a></p>
+</div>
+<div id="the-basic-steps-in-a-forecasting-task" class="section level2 hasAnchor" number="1.6">
+<h2><span class="header-section-number">1.6</span> The basic steps in a forecasting task<a href="getting-started.html#the-basic-steps-in-a-forecasting-task" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="summary-five-basic-steps-of-forecasting" class="section level3 hasAnchor" number="1.6.1">
+<h3><span class="header-section-number">1.6.1</span> Summary: Five Basic Steps of Forecasting<a href="getting-started.html#summary-five-basic-steps-of-forecasting" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+</div>
+<div id="summary-five-basic-steps-of-forecasting-1" class="section level3 hasAnchor" number="1.6.2">
+<h3><span class="header-section-number">1.6.2</span> Summary: Five Basic Steps of Forecasting<a href="getting-started.html#summary-five-basic-steps-of-forecasting-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<ol style="list-style-type: decimal">
+<li><p><strong>Problem Definition</strong>:<br />
+Clearly define the problem, understanding who needs the forecasts and how they will be used within the organization.</p></li>
+<li><p><strong>Gathering Information</strong>:<br />
+Collect statistical data and expert knowledge. If data is limited, use judgmental forecasting. Adjust for structural changes if needed.</p></li>
+<li><p><strong>Preliminary Analysis</strong>:<br />
+Graph data to identify trends, seasonality, and outliers. Assess relationships between variables.</p></li>
+<li><p><strong>Choosing and Fitting Models</strong>:<br />
+Select models based on data and forecast needs. Compare multiple models like regression, ARIMA, or exponential smoothing.</p></li>
+<li><p><strong>Using and Evaluating Models</strong>:<br />
+Use the model to forecast and evaluate accuracy once actual data is available. Address practical issues like missing data.</p></li>
+</ol>
+</div>
+</div>
+<div id="the-statistical-forecasting-perspective" class="section level2 hasAnchor" number="1.7">
+<h2><span class="header-section-number">1.7</span> The statistical forecasting perspective<a href="getting-started.html#the-statistical-forecasting-perspective" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<blockquote>
+<p>The further ahead we forecast, the more uncertain we are.</p>
+</blockquote>
+<blockquote>
+<p>A forecast is accompanied by a prediction interval giving a range of values the random variable could take with relatively high probability.</p>
+</blockquote>
+<p>80% and 95% <strong>prediction intervals</strong> are usually used.</p>
+</div>
+<div id="excercises" class="section level2 hasAnchor" number="1.8">
+<h2><span class="header-section-number">1.8</span> Excercises<a href="getting-started.html#excercises" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<ol style="list-style-type: decimal">
+<li>For cases 3 and 4 in Section <a href="https://otexts.com/fpp3/case-studies.html#case-studies">1.5</a>, list the possible predictor variables that might be useful, assuming that the relevant data are available.</li>
+</ol>
+<p><strong>Answer</strong>:</p>
+<ul>
+<li><strong>Case 3:</strong> Possible predictor variables: Brand, model, millage (total, kmpl), transmission, type of engine and fuel, new car price, region of selling, a number of service request, class of car (SUV, sedan, off-road, etc.), insurance cost, age of a car.</li>
+<li><strong>Case 4:</strong> Possible predictor variables: class of passanger, calendar of school holidays, sports events, advertising campaigns, competition behaviour (advertising compaigns), calendar of pilots’ strikes.</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>For case 3 in Section <a href="https://otexts.com/fpp3/case-studies.html#case-studies">1.5</a>, describe the five steps of forecasting in the context of this project.</li>
+</ol>
+<p><strong>Answer</strong>:</p>
+<p>Steps of forecasting:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Problem Definition</strong>:<br />
+The goal is to forecast vehicle resale values to help the company control profits and improve leasing and sales policies. It’s important to know who will use the forecasts and how they will impact decisions.</p></li>
+<li><p><strong>Gathering Information</strong>:<br />
+The company provided a lot of data on past vehicles and their resale values. Though the specialists were unhelpful, their expertise on factors affecting resale values could still be valuable. We may also need to fill gaps using judgmental methods if the data is incomplete.</p></li>
+<li><p><strong>Preliminary Analysis</strong>:<br />
+Start by analyzing the data for trends, patterns, or outliers. Look at factors like vehicle age, model, or market timing to see how they affect resale values. Identify any unusual data points.</p></li>
+<li><p><strong>Choosing and Fitting Models</strong>:<br />
+Test different models (e.g., regression or time series) to find the best fit for the data. Compare models to see which one gives the most accurate forecasts.</p></li>
+<li><p><strong>Using and Evaluating Models</strong>:<br />
+Once the model is chosen, use it to predict future resale values. Monitor how well the forecasts match actual results and make adjustments if needed. The company can then use the forecasts to refine their sales and leasing strategies.</p></li>
+</ol>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="time-series-graphics.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": false,
+"twitter": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": false
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": null,
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "lunr",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+},
+"toolbar": {
+"position": "fixed"
+},
+"info": false
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

@@ -1,0 +1,2238 @@
+# The forecaster's toolbox
+
+```{r ch05-ts-toolbox-1}
+
+# loading libraries
+library(tsibble)
+library(tsibbledata)
+library(tidyverse)
+# to read data
+library(rio)
+library(ggplot2)
+library(fabletools)
+library(feasts)
+library(fpp3)
+library(latex2exp)
+library(forecast)
+
+```
+
+[The source of the chapter](https://otexts.com/fpp3/toolbox.html)
+
+The process of producing forecasts can be split up into a few fundamentals steps:
+
+-   Preparing data - generate a `tsibble`
+-   Data visualisation
+-   Specifying a model
+-   Model estimation - model() -\> mable
+-   Accuracy & performance evaluation
+-   Producing forecasts - forecast() -\> fable
+
+## A tidy forecasting workflow
+
+[The source of the section](https://otexts.com/fpp3/a-tidy-forecasting-workflow.html)
+
+The process to make a forecast: ![alt text](https://otexts.com/fpp3/fpp_files/figure-html/workflow-1.png)
+
+### Data preparation (tidy)
+
+```{r ch05-ts-toolbox-2}
+
+gdppc <- global_economy |>
+  mutate(GDP_per_capita = GDP / Population)
+
+gdppc
+
+```
+
+### Plot the data (visualise)
+
+```{r ch05-ts-toolbox-3}
+
+gdppc |>
+  filter(Country == 'Sweden') |>
+  autoplot(GDP_per_capita) +
+  labs(y = '$US', title = 'GDP per capita for Sweden')
+
+```
+
+### Define a model (specify)
+
+Such as the data has annual frequency, use linear trend model `TSLM(GDP_per_capita ~ trend())`.
+
+### Train the model (estimate)
+
+```{r ch05-ts-toolbox-4}
+
+fit <- gdppc |>
+  model(trend_model = TSLM(GDP_per_capita ~ trend()))
+
+fit
+
+```
+
+This fits a linear trend model to the GDP per capita data for each combination of key variables in the tsibble.
+
+### Check model performance (evaluate)
+
+Once a model has been fitted, it is important to check how well it has performed on the data.
+
+### Produce forecasts (forecast)
+
+```{r ch05-ts-toolbox-5}
+
+fit |> forecast(h = '3 years')
+
+```
+
+```{r ch05-ts-toolbox-6}
+
+fit |>
+  forecast(h = '3 years') |>
+  filter(Country == 'Sweden') |>
+  autoplot(gdppc) +
+  labs(y = '$US', title = 'GDP per capita for Sweden')
+
+```
+
+## Some simple forecasting methods
+
+[The source of the section](https://otexts.com/fpp3/simple-methods.html)
+
+Simple methods which could be used as benchmarks or sanity check more complex fancy forecasting.
+
+```{r ch05-ts-toolbox-7}
+
+bricks <- aus_production |>
+  filter_index('1970 Q1' ~ '2004 Q4') |>
+  select(Bricks)
+
+bricks
+
+```
+
+### Mean method
+
+MEAN(y): Average method:
+
+-   Forecasts of all future values are **equal** to mean of historical data $\{y_1, ..., y_T\}$
+-   Forecasts: $\hat y_{T+h|T} = \bar y = (y_1 + ... + y_T)/T$
+
+```{r ch05-ts-toolbox-8}
+
+bricks |> 
+  model(MEAN(Bricks)) |>
+  forecast(h = 24) |>
+  autoplot(bricks, level = NULL) +
+  annotate("rect", xmin = bricks[1, ]$Quarter, 
+                   ymin = mean(bricks$Bricks),
+                   xmax = bricks[nrow(bricks), ]$Quarter, 
+                   ymax = mean(bricks$Bricks), 
+                   colour = "blue",
+                   linetype = 2) +
+  labs(title='Clay brick production in Australia')
+
+```
+
+### Naiïve method
+
+NAIVE(y):
+
+-   Forecasts equals to last observed value.
+-   Forecasts: $\hat y_{T+h|T} = y_T$
+-   Consequence of efficient market hypothesis
+
+> This method works remarkably well for many economic and financial time series.
+
+```{r ch05-ts-toolbox-9}
+
+bricks |> 
+  model(NAIVE(Bricks)) |>
+  forecast(h = 24) |>
+  autoplot(bricks, level = NULL) +
+  annotate("point", x = bricks[nrow(bricks), ]$Quarter, 
+                    y = bricks[nrow(bricks), ]$Bricks, 
+                    colour = "blue") +
+  labs(title='Clay brick production in Australia')
+
+```
+
+> Because a naïve forecast is optimal when data follow a random walk, these are also called random walk forecasts and the RW() function can be used instead of NAIVE.
+
+### Seasonal naïve method
+
+SNAIVE(y \~ lag(m)):
+
+-   Forecasts equal to last value from same season
+-   Forecasts: $\hat y_{T+h|T} = y_{T+h-m(k+1)}$, where $m$ = seasonal period and $k$ is the intereg part of $(h - 1)/m$
+
+```{r ch05-ts-toolbox-10}
+
+bricks |>
+  model(SNAIVE(Bricks ~ lag(4))) |> # it is possible to use lag('year') - 4 Quarters
+  forecast(h = 24) |>
+  autoplot(bricks, level = NULL) +
+  # Q4
+  annotate("point", x = bricks[nrow(bricks), ]$Quarter, 
+                    y = bricks[nrow(bricks), ]$Bricks, 
+                    colour = "blue") +
+  # Q3
+  annotate("point", x = bricks[nrow(bricks)-1, ]$Quarter, 
+                    y = bricks[nrow(bricks)-1, ]$Bricks, 
+                    colour = "blue") +
+  # Q2
+  annotate("point", x = bricks[nrow(bricks)-2, ]$Quarter, 
+                    y = bricks[nrow(bricks)-2, ]$Bricks, 
+                    colour = "blue") +
+  # Q1
+  annotate("point", x = bricks[nrow(bricks)-3, ]$Quarter, 
+                    y = bricks[nrow(bricks)-3, ]$Bricks, 
+                    colour = "blue") +
+  labs(title='Clay brick production in Australia')
+
+```
+
+### Drift method
+
+RW(y \~ drift()):
+
+-   Forecasts equal to last value plus average change
+-   Forecasts: $$
+    \hat y_{T+h|T} = y_T + \frac {h} {T - 1} \sum_{t=2}^T(y_t - y_{t-1}) 
+    = y_T + \frac {h} {T - 1} (y_t - y_1)
+    $$
+-   Equivalent to extrapolating a line drawn between first and last observations.
+
+```{r ch05-ts-toolbox-11}
+
+bricks |> 
+  model(RW(Bricks ~ drift())) |>
+  forecast(h = 24) |>
+  autoplot(bricks, level = NULL) +
+  # first point
+  annotate("point", x = bricks[1, ]$Quarter, 
+                    y = bricks[1, ]$Bricks, 
+                    colour = "blue") +
+  # last point
+  annotate("point", x = bricks[nrow(bricks), ]$Quarter, 
+                    y = bricks[nrow(bricks), ]$Bricks, 
+                    colour = "blue") +
+  annotate("segment", x = bricks[1, ]$Quarter, 
+                      y = bricks[1, ]$Bricks, 
+                      xend = bricks[nrow(bricks), ]$Quarter, 
+                      yend = bricks[nrow(bricks), ]$Bricks, 
+                      colour = "blue",
+                      linetype = 2) +
+  labs(title='Clay brick production in Australia')
+
+```
+
+### Model fitting
+
+```{r ch05-ts-toolbox-12}
+
+brick_fit <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  model(
+    Seasonal_naive = SNAIVE(Bricks),
+    Naive = NAIVE(Bricks),
+    Drift = RW(Bricks ~ drift()),
+    Mean = MEAN(Bricks)
+  )
+
+brick_fit
+
+```
+
+### Producing forecasts
+
+```{r ch05-ts-toolbox-13}
+
+brick_fc <- brick_fit |>
+  forecast(h = '5 years')
+
+brick_fc
+
+```
+
+### Visualising forecasts
+
+```{r ch05-ts-toolbox-14}
+
+brick_fc |>
+  autoplot(aus_production, level = NULL) +
+  labs(title = 'Clay brick production in Australia',
+       y = 'Millions of bricks') +
+  guides(colour = guide_legend(title = 'Forecast'))
+
+```
+
+### Example: Facebook closing stock price
+
+```{r ch05-ts-toolbox-15}
+
+fb_stock <- gafa_stock |>
+  filter(Symbol == 'FB') |>
+  mutate(traiding_day = row_number()) |>
+  update_tsibble(index = traiding_day, regular = TRUE)
+
+fb_stock |>
+  autoplot(Close)
+
+```
+
+There is no seasonality.
+
+```{r ch05-ts-toolbox-16}
+
+fb_stock |>
+  model(
+    Mean = MEAN(Close),
+    Naive = NAIVE(Close),
+    Drift = RW(Close ~ drift())
+  ) |>
+  forecast(h = 42) |> # forecast for 42 days
+  autoplot(fb_stock, level = NULL) +
+  labs(title = 'Facebook closing stock price', y = '$US') +
+  guides(color = guide_legend(title = 'Forecast'))
+
+```
+
+### Example: Australian quarterly beer production
+
+```{r ch05-ts-toolbox-17}
+
+beer <- aus_production |>
+  filter_index("1992 Q1" ~ .)
+
+beer |> gg_tsdisplay()
+
+```
+
+```{r ch05-ts-toolbox-18}
+
+# Set training data from 1992 to 2006
+train <- aus_production |>
+  filter_index('1992 Q1' ~ '2006 Q4')
+
+# Fit the model
+beer_fit <- train |>
+  model(
+    Mean = MEAN(Beer),
+    `Naïve` = NAIVE(Beer),
+    `Seasonal Naïve` = SNAIVE(Beer),
+    Drift = RW(Beer ~ drift())
+  )
+# Generate forecasts for 14 quarters
+beer_fc <- beer_fit |>
+  forecast(h = 14)
+# Plot forecasts against actual values
+beer_fc |>
+  autoplot(train, level = NULL) +
+  autolayer(
+    filter_index(aus_production, '2007 Q1' ~ .),
+    color = 'black'
+  ) +
+  labs(y = 'Megalitres',
+       title = 'Forecasts for beer production') +
+  guides(coclor = guide_legend(title = 'Forecast'))
+
+
+```
+
+### Example: Google's daily closing stock price
+
+> ... first set up a new time index based on the trading days rather than calendar days
+
+```{r ch05-ts-toolbox-19}
+
+# Re-index based on trading days
+google_stock <- gafa_stock |>
+  filter(Symbol == "GOOG", year(Date) >= 2015) |>
+  mutate(day = row_number()) |>
+  update_tsibble(index = day, regular = TRUE)
+
+# Filter the year of interest
+google_2015 <- google_stock |> filter(year(Date) == 2015)
+# Fit the models
+google_fit <- google_2015 |>
+  model(
+    Mean = MEAN(Close),
+    `Naïve` = NAIVE(Close),
+    Drift = NAIVE(Close ~ drift())
+  )
+# Produce forecasts for the trading days in January 2016
+google_jan_2016 <- google_stock |>
+  filter(yearmonth(Date) == yearmonth("2016 Jan"))
+google_fc <- google_fit |>
+  forecast(new_data = google_jan_2016)
+# Plot the forecasts
+google_fc |>
+  autoplot(google_2015, level = NULL) +
+  autolayer(google_jan_2016, Close, colour = "black") +
+  labs(y = "$US",
+       title = "Google daily closing stock prices",
+       subtitle = "(Jan 2015 - Jan 2016)") +
+  guides(colour = guide_legend(title = "Forecast"))
+
+```
+
+> Sometimes one of these simple methods will be the best forecasting method available; but in many cases, these methods will serve as benchmarks rather than the method of choice. That is, any forecasting methods we develop will be compared to these simple methods to ensure that the new method is better than these simple alternatives. If not, the new method is not worth considering.
+
+## Fitted values and residuals
+
+[The source of the section](https://otexts.com/fpp3/residuals.html)
+
+### Fitted values
+
+-   $\hat y_{t|t-1}$ is the forecast of $y_t$ based on observations $y_1, ..., y_{t-1}$
+-   We call these **fitted values**
+-   Sometimes drop the subscript: $\hat y_t \equiv \hat y_{t|t-1}$
+-   Fitted values are often not true forecasts because any parameters involved in the forecasting method are estimated using all available observations in the time series, including future observations.
+
+### Residuals
+
+-   Residuals in forecasting is difference between observed value and its fitted value: $e_t = y_t - \hat y_{t|t-1}$
+-   If a transformation has been used in the model, then it is often useful to look at residuals on the transformed scale.
+
+**Assumptions:**
+
+1.  $\{e_t\}$ uncorrelated. If they aren't, then information left in residuals that should be used in computing forecasts.
+2.  $\{e_t\}$ have mean zero. If they don't, then forecast are biased and we need to adjust for this, which are called **innovation residuals**. If the residuals have mean $m$, then simply add $m$ to all forecasts.
+
+**Useful properties:** (for distributions & prediction intervals)
+
+3.  $\{e_t\}$ (innovation residuals) have constant variance **"homoscedasticity"**
+4.  $\{e_t\}$ are normally distributed
+
+```{r ch05-ts-toolbox-20}
+
+# to get residuals
+augment(beer_fit)
+
+
+```
+
+-   `.fitted` contains the fitted values;
+-   `.resid` contains the residuals;
+-   `.innov` contains the "innovation residuals" which, in this case, are identical to the regular residuals.
+
+> Residuals are useful in checking whether a model has adequately captured the information in the data. For this purpose, we use innovation residuals. If patterns are observable in the innovation residuals, the model can probably be improved.
+
+## Residual diagnostics
+
+[The source of the section](https://otexts.com/fpp3/diagnostics.html)
+
+```{r ch05-ts-toolbox-21}
+
+fb_stock |>
+  autoplot(Close)
+
+```
+
+```{r ch05-ts-toolbox-22}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment()
+
+```
+
+-   `.fitted` = $\hat y_{t|t-1}$
+-   `.resid` = $e_t$
+
+```{r ch05-ts-toolbox-23}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  ggplot(aes(x = traiding_day)) +
+  geom_line(aes(y = Close, color = 'Actual Data')) +
+  geom_line(aes(y = .fitted, color = 'Fitted'))
+
+```
+
+```{r ch05-ts-toolbox-24}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  ggplot(aes(x = Close, y = .fitted)) +
+  geom_point()
+  
+```
+
+```{r ch05-ts-toolbox-25}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  autoplot(.resid)
+
+```
+
+```{r ch05-ts-toolbox-26}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  ggplot(aes(x = .resid)) +
+  geom_histogram(bins = 150) +
+  labs(title = 'Histogram of residuals')
+
+```
+
+```{r ch05-ts-toolbox-27}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  ACF(.resid) |>
+  autoplot() +
+  labs(title = 'ACF of residuals')
+
+```
+
+```{r ch05-ts-toolbox-28}
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  gg_tsresiduals()
+
+```
+
+### ACF of residuals
+
+-   We assume that the residuals are white noise (uncorrelated, mean zero, constant variance). If they aren't, then there is information left in the residuals that should be used in computing forecasts.
+-   So a standard residuals diagnostic is to check the ACF of the residuals of a forecasting method.
+-   We expect these to look like white noise.
+
+### Example: Forecasting Google daily closing stock prices
+
+PLot the data.
+
+```{r ch05-ts-toolbox-29}
+
+google_2015 |>
+  autoplot(Close) +
+  labs(y = '$US',
+       title = 'Google daily closing stock prices in 2015')
+
+```
+
+Check the residuals from forecasting the series using the naive method.
+
+```{r ch05-ts-toolbox-30}
+
+# fit the model and get the residuals
+aug <- google_2015 |>
+  model(NAIVE(Close)) |>
+  augment() 
+
+aug
+```
+
+```{r ch05-ts-toolbox-31}
+aug|>
+  autoplot(.innov) +
+  labs(y = '$US',
+       title = 'Residuals of the naive method')
+
+```
+
+Check the residuals distribution.
+
+```{r ch05-ts-toolbox-32}
+
+aug |>
+  ggplot(aes(x = .innov)) +
+  geom_histogram() +
+  labs(title = 'Histogram of residuals')
+
+```
+
+Check the ACF of residuals.
+
+```{r ch05-ts-toolbox-33}
+
+aug |>
+  ACF(.innov) |>
+  autoplot() +
+  labs(title = 'Residuals from the naive method')
+
+```
+
+```{r ch05-ts-toolbox-34}
+
+mean(aug$.innov, na.rm = T)
+
+```
+
+A convenient shortcut for producing these residuals diagnostic graphs is the `qq_tsresiduals()` function.
+
+```{r ch05-ts-toolbox-35}
+
+google_2015 |>
+  model(NAIVE(Close)) |>
+  gg_tsresiduals()
+
+```
+
+### Portmanteau tests for autocorrelation
+
+$r_k$ = autocorrelation of residual at lag $k$
+
+**Box-Pierce test**
+
+$$
+Q = T\sum_{k=1}^l r_k^2
+$$ where $l$ is max lag being considered and $T$ is number of observations.
+
+-   If each $r_k$ close to zero, $Q$ will be **small**
+-   If each $r_k$ values large (positive or negative), $Q$ will be **large**
+
+**Ljung-Box test**
+
+$$
+Q^* = T(T+2)\sum_{k=1}^l(T-k)^{-1}r_k^2
+$$ where $l$ is max lag being considered and $T$ is number of observations.
+
+-   $l$ = 10 for non-seasonal data, $l = 2m$ for seasonal data (where $m$ is seasonal period). However, the test is not good when $l$ is large, so if these values are larger than T/5, then use $l = T/5$
+-   Better performance, especially in small sample
+
+```{r ch05-ts-toolbox-36}
+# if data are WN, Q* has X^2 distribution with l degree of freedom
+# lag = l
+
+fb_stock |>
+  model(NAIVE(Close)) |>
+  augment() |>
+  features(.resid, ljung_box, lag=10)
+
+
+```
+
+`lb_stat` = $Q^*$, `lb_pvalue` \< 0.05 - reject $H_0$
+
+Large values of $Q^∗$ suggest that the autocorrelations **do not come** from a white noise series.
+
+```{r ch05-ts-toolbox-37}
+
+aug |> features(.innov, box_pierce, lag = 10)
+
+```
+
+```{r ch05-ts-toolbox-38}
+
+aug |> features(.innov, ljung_box, lag = 10)
+
+```
+
+-   **H0**: There are no autocorrelation of residuals
+-   **H1**: There are autocorrelation of residuals
+
+For both $Q$ and $Q^∗$, the results are not significant (i.e., the p-values are relatively large). Thus, we can conclude that the residuals are not distinguishable from a white noise series.
+
+## Distributional forecasts and prediction intervals
+
+[The source of the section](https://otexts.com/fpp3/prediction-intervals.html)
+
+### Forecast distributions
+
+> Most time series models produce normally distributed forecasts --- that is, we assume that the distribution of possible future values follows a normal distribution.
+
+### Prediction intervals
+
+**Predistion interval** is an interval within which $y_t$ is expected to lie with a specified probability. Assuming that distribution of future observations is normal, a 95% prediction interval for $h$-step forecast is $$
+\hat y_{T+h|T} \pm 1.96\hat \sigma_h
+$$ where $\hat \sigma_h$ is an estimate of the standard deviation of the $h$-step forecast distribution.
+
+$$
+\hat y_{T+h|T} \pm c\hat \sigma_h
+$$ Usually 80% intervals and 95% intervals are used.
+
+| Probability | Multiplier ($c$) |
+|-------------|------------------|
+| 50%         | 0.67             |
+| 55%         | 0.76             |
+| 60%         | 0.84             |
+| 65%         | 0.93             |
+| 70%         | 1.04             |
+| 75%         | 1.15             |
+| 80%         | 1.28             |
+| 85%         | 1.44             |
+| 90%         | 1.64             |
+| 95%         | 1.96             |
+| 96%         | 2.05             |
+| 97%         | 2.17             |
+| 98%         | 2.33             |
+| 99%         | 2.58             |
+
+> The value of prediction intervals is that they express the uncertainty in the forecasts.
+
+### One-step prediction intervals
+
+One step forecasting:
+
+$$
+\hat \sigma = \sqrt {\frac 1 {T-K-M}\sum_{t=1}^T e_t^2}
+$$ where
+
+-   $K$ is the number of parameters estimated in the forecast method
+-   $M$ is the number of missing values in the residuals
+-   $T$ is the number of observations
+
+### Multi-step prediction intervals
+
+> The further ahead we forecast, the more uncertainty is associated with the forecast, and thus the wider the prediction intervals. Assuming that the residuals are uncorrelated.
+
+### Benchmark methods
+
+Multi-step forecast standard deviation for the four benchmark methods, where $\sigma$ is the residual standard deviation, $m$ is the seasonal period, and \$k% is the integer part of\
+$(h−1)/m$ (i.e., the number of complete years in the forecast period prior to time $T + h$).
+
+| Benchmark method | $h$-step forecast standard deviation                |
+|------------------|-----------------------------------------------------|
+| Mean             | $\hat \sigma_h = \hat \sigma \sqrt {1+1/T}$         |
+| Naïve            | $\hat \sigma_h = \hat \sigma \sqrt h$               |
+| Seasonal Naïve   | $\hat \sigma_h = \hat \sigma \sqrt {k+1}$           |
+| Drift            | $\hat \sigma_h = \hat \sigma \sqrt {h(1+h/(T-1)))}$ |
+
+```{r ch05-ts-toolbox-39}
+
+google_2015 |>
+  model(NAIVE(Close)) |>
+  forecast(h = 10) |>
+  hilo()
+
+```
+
+```{r ch05-ts-toolbox-40}
+
+google_2015 |>
+  model(NAIVE(Close)) |>
+  forecast(h = 10) |>
+  autoplot(google_2015) +
+  labs(title="Google daily closing stock price", y="$US" )
+
+```
+
+### Prediction intervals from bootstrapped residuals
+
+```{r ch05-ts-toolbox-41}
+
+fit <- google_2015 |>
+  model(NAIVE(Close)) 
+
+sim <- fit |>
+  generate(h=30, times = 5, bootstrap = TRUE)
+
+sim
+
+```
+
+```{r ch05-ts-toolbox-42}
+
+google_2015 |>
+  ggplot(aes(x = day)) +
+  geom_line(aes(y = Close)) +
+  geom_line(aes(y = .sim, colour = as.factor(.rep)),
+    data = sim) +
+  labs(title="Google daily closing stock price", y="$US" ) +
+  guides(colour = "none")
+
+```
+
+```{r ch05-ts-toolbox-43}
+
+# bootstrapped prediction intervals
+
+fc <- fit |> forecast(h = 30, bootstrap = TRUE, times = 1000)
+fc
+
+```
+
+The bootstrapped prediction intervals are not symmetric.
+
+```{r ch05-ts-toolbox-44}
+
+autoplot(fc, google_2015) +
+  labs(title="Google daily closing stock price", y="$US" )
+
+```
+
+## Forecasting using transformations
+
+[The source of the section](https://otexts.com/fpp3/ftransformations.html)
+
+```{r ch05-ts-toolbox-45}
+
+fc <- prices |>
+  filter(!is.na(eggs)) |>
+  model(RW(log(eggs) ~ drift())) |>
+  forecast(h = 50) |>
+  mutate(.median = median(eggs))
+
+fc |>
+  autoplot(prices |> filter(!is.na(eggs)), level = 80) +
+  geom_line(aes(y = .median), data = fc, linetype = 2, col = "blue") +
+  labs(title = "Annual egg prices",
+       y = "$US (in cents adjusted for inflation) ")
+
+```
+
+## Forecasting with decomposition
+
+[The source of the section](https://otexts.com/fpp3/forecasting-decomposition.html)
+
+| Decomposition  | Formula                    | Seasonal adjusted component      |
+|------------------|----------------------------|---------------------------|
+| Additive       | $y_t =\hat S_t + \hat A_t$ | $\hat A_t = \hat T_t + \hat R_t$ |
+| Multiplicative | $y_t =\hat S_t \hat A_t$   | $\hat A_t = \hat T_t\hat R_t$    |
+
+> To forecast a decomposed time series, we forecast the seasonal component, and the seasonally adjusted component separately. It is usually assumed that the seasonal component is unchanging, or changing extremely slowly.
+
+### Example: Employment in the US retail sector
+
+Plot the data.
+
+```{r ch05-ts-toolbox-46}
+
+us_retail_employment <- us_employment |>
+  filter(year(Month) >= 1990, Title == 'Retail Trade') 
+
+us_retail_employment |>
+  autoplot(Employed)
+
+```
+
+Decompose the time series.
+
+```{r ch05-ts-toolbox-47}
+
+dcmp <- us_retail_employment |>
+  model(STL(Employed ~ trend(window = 7), robust = TRUE)) |>
+  components()
+
+dcmp |>
+  autoplot()
+
+```
+
+Fit the model.
+
+```{r ch05-ts-toolbox-48}
+
+dcmp |>
+  select(-.model) |>
+  autoplot(season_adjust)
+
+```
+
+```{r ch05-ts-toolbox-49}
+
+dcmp <- dcmp |>
+  select(-.model)
+
+dcmp |>
+  model(NAIVE(season_adjust)) |>
+  forecast() |>
+  autoplot(dcmp) +
+  labs(y = "Number of people",
+       title = "US retail employment")
+
+```
+
+The other way.
+
+```{r ch05-ts-toolbox-50}
+
+fit_dcmp <- us_retail_employment |>
+  model(stlf = decomposition_model(
+    STL(Employed ~ trend(window = 7), robust = TRUE),
+    NAIVE(season_adjust)
+  ))
+fit_dcmp |>
+  forecast() |>
+  autoplot(us_retail_employment)+
+  labs(y = "Number of people",
+       title = "US retail employment")
+
+```
+
+```{r ch05-ts-toolbox-51}
+
+fit_dcmp |> gg_tsresiduals()
+
+```
+
+## Evaluating point forecast accuracy
+
+[The source of the section](https://otexts.com/fpp3/accuracy.html)
+
+### Training and test sets
+
+!(alt text)[<https://otexts.com/fpp3/fpp_files/figure-html/traintest-1.png>]
+
+Training set - 80% Test set - 20%
+
+-   The test set should ideally be at least as large as the maximum forecast horizon required
+-   A model which fits the training data wel will not necessarily forecast well
+-   A perfect fit can always be obtained by using a model with enough parameters
+-   Over-fitting a model to data is just bad as falling to idetify a systematic patterns in the data
+-   The test set must not be used for any aspect of model development of calculation of forecasts
+-   Forecast accuracy is based only on the test data
+
+### Functions to subset a time series
+
+```{r ch05-ts-toolbox-52}
+
+aus_production |> filter(year(Quarter) >= 1995)
+
+```
+
+```{r ch05-ts-toolbox-53}
+
+aus_production |> filter_index('1995 Q1' ~ .)
+
+```
+
+```{r ch05-ts-toolbox-54}
+
+# extract 5 years - 20 quarters
+aus_production |> slice(n() - 19:0)
+
+```
+
+```{r ch05-ts-toolbox-55}
+
+# subset the first year of data from each time series in the data
+aus_retail |>
+  group_by(State, Industry) |>
+  slice(1:12)
+  
+```
+
+### Forecast errors
+
+A forecast error is the difference between an observed value and its forecast.
+
+$$
+e_{T+h} = y_{T+h} - \hat y_{T+h|T}
+$$ \> **Note!** The forecast errors are different from residuals in two ways. First, residuals are calculated on the training set while forecast errors are calculated on the test set. Second, residuals are based on one-step forecasts while forecast errors can involve multi-step forecasts.
+
+### Scale-dependent errors
+
+Scale-dependent measures:
+
+-   Mean absolute error: $MAE = mean(|e_t|)$
+-   Root mean squared error: $RMSE = \sqrt {mean(e_t^2)}$
+
+### Percentage errors
+
+Unit-free forecast perfirmance measure:
+
+-   Percentage error $p_t = 100e_t/y_t$
+-   Mean absolute percentage error: $MAPE = mean(|p_t|)$
+
+> **Note!** Measures based on percentage errors have the disadvantage of being infinite or undefined if $y_t = 0$ for any $t$ in the period of interest, and having extreme values if any $y_t$ is close to zero.
+
+Symmetric mean absolute percentage error: $sMAPE = mean(200|y_t - \hat y_t|/(y_y + \hat y_t))$
+
+### Scaled errors
+
+Scaled error (non-seasonal): $$
+q_j = \frac {e_j} {\frac {1} {T-1}\sum_{t=2}^T|y_t - y_{t-1}|}
+$$
+
+-   A scaled error is **less than one** if it arises from a better forecast than the average one-step naïve forecast computed on the training data.
+-   A scaled error is **greater than one** if the forecast is worse than the average one-step naïve forecast computed on the training data.
+
+Scaled error (seasonal): $$
+q_j = \frac {e_j} {\frac {1} {T-m}\sum_{t=m+1}^T|y_t - y_{t-m}|}
+$$
+
+Mean absolute squared error: $MASE = mean(|q_j|)$
+
+Root mean squared scaled error: $RMSSE = \sqrt{mean(q_t^2)}$,\
+where $q_j^2 = \frac {e_j^2} {\frac {1} {T-m}\sum_{t=m+1}^T(y_t - y_{t-m})^2}$\
+and $m = 1$ for non-seasonal data.
+
+### Examples
+
+```{r ch05-ts-toolbox-56}
+
+recent_production <- aus_production |>
+  filter(year(Quarter) >= 1992)
+
+beer_train <- recent_production |>
+  filter(year(Quarter) <= 2007)
+
+beer_fit <- beer_train |>
+  model(
+    Mean = MEAN(Beer),
+    `Naïve` = NAIVE(Beer),
+    `Seasonal Naïve` = SNAIVE(Beer),
+    Drift = RW(Beer ~ drift())
+  )
+
+beer_fc <- beer_fit |>
+  forecast(h = 10)
+
+beer_fc |>
+  autoplot(
+    aus_production |> filter(year(Quarter) >= 1992),
+    level = NULL
+  ) +
+  labs(
+    y = "Megalitres",
+    title = "Forecasts for quarterly beer production"
+  ) +
+  guides(colour = guide_legend(title = "Forecast"))
+
+```
+
+```{r ch05-ts-toolbox-57}
+
+accuracy(beer_fc, recent_production)
+
+```
+
+**Non-seasonal example**
+
+```{r ch05-ts-toolbox-58}
+
+google_fit <- google_2015 |>
+  model(
+    Mean = MEAN(Close),
+    `Naïve` = NAIVE(Close),
+    Drift = RW(Close ~ drift())
+  )
+
+google_fc <- google_fit |>
+  forecast(google_jan_2016)
+
+```
+
+```{r ch05-ts-toolbox-59}
+
+google_fc |>
+  autoplot(bind_rows(google_2015, google_jan_2016),
+    level = NULL) +
+  labs(y = "$US",
+       title = "Google closing stock prices from Jan 2015") +
+  guides(colour = guide_legend(title = "Forecast"))
+
+```
+
+```{r ch05-ts-toolbox-60}
+
+accuracy(google_fc, google_stock)
+
+```
+
+## Evaluating distributional forecast accuracy
+
+[The source of the section](https://otexts.com/fpp3/distaccuracy.html)
+
+### Quantile scores
+
+Get the full time series.
+
+```{r ch05-ts-toolbox-61}
+
+# time series
+google_stock <- gafa_stock |>
+  filter(Symbol == 'GOOG', year(Date) >= 2015) |>
+  mutate(day = row_number()) |>
+  update_tsibble(index = day, regular = TRUE)
+
+google_stock
+
+```
+
+SPlit the data into the training set and test set.
+
+```{r ch05-ts-toolbox-62}
+
+# training set
+google_2015 <- google_stock |>
+  filter(year(Date) == 2015)
+
+google_2015
+
+```
+
+```{r ch05-ts-toolbox-63}
+
+#test set
+google_jan_2016 <- google_stock |>
+  filter(yearmonth(Date) == yearmonth('2016 Jan'))
+
+google_jan_2016
+
+```
+
+Fit the benchmark models.
+
+```{r ch05-ts-toolbox-64}
+
+# fit the models on trainig set
+google_fit <- google_2015 |>
+  model(
+    Mean = MEAN(Close),
+    Naive = NAIVE(Close),
+    Drift = RW(Close ~ drift())
+  )
+
+google_fit
+
+```
+
+Make the forecasts on the test set.
+
+```{r ch05-ts-toolbox-65}
+
+google_fc <- google_fit |>
+  forecast(google_jan_2016)
+
+google_fc
+
+```
+
+Plot the forecasts.
+
+```{r ch05-ts-toolbox-66}
+
+google_fc |>
+  autoplot(bind_rows(google_2015, google_jan_2016)) +
+  facet_grid(vars(.model)) +
+  labs(y = '$US', title = 'Google closing stock prices')
+
+```
+
+```{r ch05-ts-toolbox-67}
+
+google_fc |>
+  filter(.model == "Naive", Date == "2016-01-04") |>
+  accuracy(google_stock, list(qs=quantile_score), probs=0.10)
+
+```
+
+### Winkler Score
+
+```{r ch05-ts-toolbox-68}
+
+google_fc |>
+  filter(.model == "Naive", Date == "2016-01-04") |>
+  accuracy(google_stock,
+    list(winkler = winkler_score), level = 80)
+
+```
+
+### Continuous Ranked Probability Score
+
+```{r ch05-ts-toolbox-69}
+
+google_fc |>
+  accuracy(google_stock, list(crps = CRPS))
+
+```
+
+### Scale-free comparisons using skill scores
+
+```{r ch05-ts-toolbox-70}
+
+google_fc |>
+  accuracy(google_stock, list(skill = skill_score(CRPS)))
+
+```
+
+## Time series cross-validation
+
+[The source of the section](https://otexts.com/fpp3/tscv.html)
+
+```{r ch05-ts-toolbox-71}
+
+# Time series cross-validation accuracy
+google_2015_tr <- google_2015 |>
+  stretch_tsibble(.init = 3, .step = 1) |>
+  relocate(Date, Symbol, .id)
+google_2015_tr
+
+```
+
+```{r ch05-ts-toolbox-72}
+
+# TSCV accuracy
+google_2015_tr |>
+  model(RW(Close ~ drift())) |>
+  forecast(h = 1) |>
+  accuracy(google_2015)
+# Training set accuracy
+google_2015 |>
+  model(RW(Close ~ drift())) |>
+  accuracy()
+
+```
+
+### Example: Forecast horizon accuracy with cross-validation
+
+```{r ch05-ts-toolbox-73}
+
+google_2015_tr <- google_2015 |>
+  stretch_tsibble(.init = 3, .step = 1)
+fc <- google_2015_tr |>
+  model(RW(Close ~ drift())) |>
+  forecast(h = 8) |>
+  group_by(.id) |>
+  mutate(h = row_number()) |>
+  ungroup() |>
+  as_fable(response = "Close", distribution = Close)
+fc |>
+  accuracy(google_2015, by = c("h", ".model")) |>
+  ggplot(aes(x = h, y = RMSE)) +
+  geom_point()
+
+```
+
+## Exercises
+
+1.  
+
+-   NAIVE(Y) - non-seasonal and non-trended data
+-   SNAIVE(y) - strong seasonal component in the data
+-   RW(y \~ drift()) - explicit trend in the data
+
+```{r ch05-ts-toolbox-74}
+
+# Australian Population (global_economy)
+aus_population <- global_economy |>
+  filter(Code == 'AUS') |>
+  select(Population)
+
+aus_population |>
+  gg_tsdisplay(plot_type = 'scatter')
+
+# => There is annual data with strong trend and no seasonality => use drift method
+
+aus_population |>
+  model(RW(Population ~ drift())) |>
+  forecast(h=4) |>
+autoplot(aus_population) +
+  labs(title = 'Forecasts Australian population',
+       subtitle = 'Drift Method')
+
+```
+
+```{r ch05-ts-toolbox-75}
+
+# Bricks (aus_production)
+bricks <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  select(Bricks)
+
+bricks |>
+  gg_tsdisplay()
+
+# => There is quarterly data with trend and seasonality => use seasonal naive method
+
+bricks |>
+  model(SNAIVE(Bricks)) |>
+  forecast(h = 8) |>
+  autoplot(bricks) +
+  labs(title = 'Forecasts Australian bricks production', 
+       subtitle = 'Seasonal Naïve method')
+
+```
+
+```{r ch05-ts-toolbox-76}
+
+# NSW Lambs (aus_livestock)
+nsw_lambs <- aus_livestock |>
+  filter(State == 'New South Wales', Animal == 'Lambs')
+
+nsw_lambs |>
+  gg_tsdisplay()
+
+# => There is monthly data with trend and seasonality => use seasonal naive method
+
+nsw_lambs |>
+  model(SNAIVE(Count)) |>
+  forecast(h = 24) |>
+  autoplot(nsw_lambs) +  
+  labs(title = 'Forecasts New South Wales lambs production',
+       subtitle = 'Seasonal Naïve method')
+
+```
+
+```{r ch05-ts-toolbox-77}
+
+# Household wealth (hh_budget)
+
+hh_budget |>
+  autoplot(Wealth) +
+  facet_grid(vars(Country))
+
+# => There is no seasonality, but there is trend => use drift method
+
+hh_budget |>
+  model(RW(Wealth ~ drift())) |>
+  forecast(h = 4) |>
+  autoplot(hh_budget) +
+    labs(title = 'Forecasts household wealth',
+       subtitle = 'Drift Method')
+
+```
+
+```{r ch05-ts-toolbox-78}
+
+# Australian takeaway food turnover (aus_retail)
+aus_retail |> distinct(Industry)
+aus_retail |> distinct(State)
+
+takeaway_food <- aus_retail |>
+  filter(Industry == 'Cafes, restaurants and takeaway food services') |>
+  select(-Industry)
+
+takeaway_food |>
+  autoplot(Turnover) +
+  facet_grid(vars(State)) +
+  theme(legend.position="none")
+
+# => There are trend and seasonality => seasonal naive method
+
+takeaway_food |>
+  model(SNAIVE(Turnover)) |>
+  forecast(h = 24) |>
+  autoplot(takeaway_food) +
+  labs(title = 'Forecasts of Australian takeaway food turnover',
+       subtitle = 'Seasonal Naive Method')
+
+```
+
+2.  
+
+```{r ch05-ts-toolbox-79}
+
+fb <- gafa_stock |>
+        filter(Symbol == 'FB') |>
+        mutate(day = row_number()) |>
+        update_tsibble(index = day, regular = TRUE)
+
+# a. Produce a time plot of the series.
+fb |>
+  autoplot(Close)
+
+# b. Produce forecasts using the drift method and plot them.
+fb |>
+  model(RW(Close ~ drift())) |>
+  forecast(h = 45) |>
+  autoplot(fb) +
+  labs(title='Facebook stock price forecasts',
+       subtitle = 'Drift Method')
+
+# c. Show that the forecasts are identical to extending the line
+#    drawn between the first and last observations.
+
+fb |>
+  model(RW(Close ~ drift())) |>
+  forecast(h = 45) |>
+  autoplot(fb) +
+  # first point
+  annotate("point", x = fb[1, ]$day, 
+                    y = fb[1, ]$Close, 
+                    colour = "blue") +
+  # last point
+  annotate("point", x = fb[nrow(fb), ]$day, 
+                    y = fb[nrow(fb), ]$Close, 
+                    colour = "blue") +
+  annotate("segment", x = fb[1, ]$day, 
+                      y = fb[1, ]$Close, 
+                      xend = fb[nrow(fb), ]$day, 
+                      yend = fb[nrow(fb), ]$Close, 
+                      colour = "blue",
+                      linetype = 2) +
+  labs(title='Facebook stock price forecasts',
+       subtitle = 'Drift Method')
+
+# d. Try using some of the other benchmark functions to forecast 
+#    the same data set. Which do you think is best? Why?
+fb |>
+  model(
+    Mean = MEAN(Close),
+    Naive = NAIVE(Close),
+    Drift = RW(Close ~ drift())) |>
+  forecast(h = 45) |>
+  autoplot(fb) +
+  facet_grid(vars(.model)) +
+  theme(legend.position = 'none') +
+  labs(title='Facebook stock price forecasts')
+
+# => Drift method is the best because of drift method shows the linear trend
+
+```
+
+3.  
+
+```{r ch05-ts-toolbox-80}
+
+beer_production <- aus_production |>
+  filter(year(Quarter) >= 1992)
+
+beer_production
+
+```
+
+```{r ch05-ts-toolbox-81}
+
+beer_fit <- beer_production |>
+  model(SNAIVE(Beer))
+
+beer_fit |>
+  gg_tsresiduals()
+
+```
+
+```{r ch05-ts-toolbox-82}
+
+beer_fit |>
+  forecast() |>
+  autoplot(beer_production)
+
+```
+
+**Conclusion:**
+
+-   There is autocorrelation in the residuals
+-   Bimodal distribution of the residuals
+
+4.  
+
+```{r ch05-ts-toolbox-83}
+
+# Australian Exports
+
+aus_exports <- global_economy |>
+  filter(Country == 'Australia') |>
+  select(Exports)
+
+aus_exports |>
+  gg_tsdisplay()
+
+# => there is no seasonality, so use NAIVE method
+
+aus_fit <- aus_exports |>
+  model(NAIVE(Exports))
+
+aus_fit |>
+  gg_tsresiduals()
+
+# => there is no autocorrelation in the residuals and a normal distribution
+
+aus_fit |>
+  forecast(h = 4) |>
+  autoplot(aus_exports) +
+  labs(title = 'Australian export forecasts')
+
+```
+
+```{r ch05-ts-toolbox-84}
+
+# Bricks series from aus_production
+
+aus_bricks <- aus_production |>
+  filter(year(Quarter) >= 1992) |>
+  select(Bricks) |>
+  filter(!is.na(Bricks))
+
+aus_bricks |> autoplot(Bricks)
+
+# there is seasonality in the data
+
+fit <- aus_bricks |>
+  model(SNAIVE(Bricks))
+
+fit |> gg_tsresiduals()
+
+# there is autocorrelation in the residuals and left-skewed distribution
+
+fit |>
+  forecast(h = 8) |>
+  autoplot(aus_bricks) +
+  labs(title = 'Australian bricks production forecasts', y = 'Millions of brick')
+
+```
+
+5.  
+
+```{r ch05-ts-toolbox-85}
+
+vic <- aus_livestock |>
+  filter(State == 'Victoria') |>
+  select(-State)
+
+vic |> 
+  model(SNAIVE(Count)) |>
+  forecast(h = 8) |>
+  autoplot(vic)
+
+```
+
+The SNAIVE method forecasts future values by repeating the seasonal pattern observed in the previous 12 months. This can be a good benchmark for time series data with clear and stable seasonal patterns, but it may not perform well if the series also exhibit strong trends or irregular patterns beyond seasonality.
+
+6.  
+
+```{=html}
+<!-- -->
+```
+a.  Good forecast methods should have normally distributed residuals.
+
+**Partly TRUE** Normality is a useful diagnostic but is less crucial than the absence of autocorrelation or structural patterns in the residuals.
+
+b.  A model with small residuals will give good forecasts.
+
+**FALSE** Small residuals copuld indicates over-fitting.
+
+c.  The best measure of forecast accuracy is MAPE.
+
+**FALSE** MAPE could be infinite if the residuals too close to zero.
+
+d.  If your model doesn't forecast well, you should make it more complicated.
+
+**Partly TRUE** I should analyse the data and residuals and stepwise improve the model avoiding overfitting.
+
+e.  Always choose the model with the best forecast accuracy as measured on the test set.
+
+**Partly TRUE** The test set is for evaluating the model on unseen data. Needs to keep balance between accuracy and other factors such as simplicity, interpretability and computational cost.
+
+7.  
+
+```{r ch05-ts-toolbox-86}
+
+set.seed(123)
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+
+myseries |>
+  gg_tsdisplay()
+
+```
+
+```{r ch05-ts-toolbox-87}
+
+# a. 
+
+myseries_train <- myseries |>
+  filter(year(Month) < 2011)
+
+myseries_train
+
+```
+
+```{r ch05-ts-toolbox-88}
+
+# b.
+
+autoplot(myseries, Turnover) +
+  autolayer(myseries_train, Turnover, colour = "red")
+
+```
+
+```{r ch05-ts-toolbox-89}
+
+# c.
+
+fit <- myseries_train |>
+  model(SNAIVE(Turnover))
+
+# d.
+
+fit |>
+  gg_tsresiduals()
+
+```
+
+> Do the residuals appear to be uncorrelated and normally distributed?
+
+No, the residuals are autocorrelated and have bimodal distribution.
+
+```{r ch05-ts-toolbox-90}
+
+# e.
+
+fc <- fit |>
+  forecast(new_data = anti_join(myseries, myseries_train))
+
+fc |>
+  autoplot(myseries)
+
+```
+
+```{r ch05-ts-toolbox-91}
+
+# f.
+
+bind_rows(fit |> accuracy(), fc |> accuracy(myseries)) |>
+  select(-(1:3))
+
+```
+
+8.  
+
+```{r ch05-ts-toolbox-92}
+
+pigs <- aus_livestock |>
+    filter(State == 'New South Wales', Animal == 'Pigs') |>
+    select(-Animal, -State)
+
+# a. Produce some plots of the data in order to become familiar with it.
+
+pigs |>
+  autoplot(Count)
+
+```
+
+```{r ch05-ts-toolbox-93}
+
+pigs |>
+  gg_tsdisplay()
+
+```
+
+```{r ch05-ts-toolbox-94}
+
+# b. Create a training set of 486 observations, 
+#    withholding a test set of 72 observations (6 years).
+
+pigs_train <- pigs |>
+  slice(1:486)
+
+pigs_train
+
+```
+
+```{r ch05-ts-toolbox-95}
+
+pigs_test <- pigs |>
+  slice(487:nrow(pigs))
+
+pigs_test
+
+```
+
+```{r ch05-ts-toolbox-96}
+
+bench_fit <- pigs_train |>
+              model(
+                Mean = MEAN(Count),
+                Naive = NAIVE(Count),
+                `Seasonal Naive` = SNAIVE(Count),
+                Drift = RW(Count ~ drift())
+              )
+
+bench_fit
+
+```
+
+```{r ch05-ts-toolbox-97}
+
+bench_fit |>
+  accuracy()
+
+```
+
+```{r ch05-ts-toolbox-98}
+
+pigs_test_fc <- bench_fit |>
+  forecast(new_data = pigs_test)
+
+pigs_test_fc |>
+  accuracy(pigs)
+
+```
+
+```{r ch05-ts-toolbox-99}
+
+bind_rows(bench_fit |> accuracy(),
+          pigs_test_fc |> accuracy(pigs))
+
+```
+
+Seasonal Naive method is more preferred on the training set, but on the test set the Drift method shown less MAPE and represents the common trend.
+
+```{r ch05-ts-toolbox-100}
+
+pigs_test_fc |>
+  autoplot(pigs) +
+  facet_grid(vars(.model))
+
+```
+
+```{r ch05-ts-toolbox-101}
+
+# d. Check the residuals of your preferred method. Do they resemble white noise?
+
+bench_fit |>
+  select(Drift) |>
+  gg_tsresiduals()
+
+# => No, there is information in hte residuals about seasonality
+
+```
+
+9.  
+
+```{r ch05-ts-toolbox-102}
+
+# a.
+
+hh_train <- hh_budget |>
+  select(Wealth) |>
+  group_by(Country) |>
+  slice(1:(n()-4))
+  
+hh_train
+
+```
+
+```{r ch05-ts-toolbox-103}
+
+# b. fit on the training set
+
+hh_fit <- hh_train |>
+  model(
+    Mean = MEAN(Wealth),
+    Naive = NAIVE(Wealth),
+    `Seasonal Naive` = SNAIVE(Wealth),
+    Drift = RW(Wealth ~ drift())
+  )
+
+hh_fit
+
+
+```
+
+```{r ch05-ts-toolbox-104}
+
+# forecast on test set
+hh_fc <- hh_fit |>
+  forecast(new_data = anti_join(hh_budget, hh_train, by=c('Country', 'Year')))
+
+hh_fc
+  
+```
+
+```{r ch05-ts-toolbox-105}
+
+# c. forecast accuracy
+
+hh_fc |>
+  accuracy(hh_budget) |>
+  arrange(Country)
+
+```
+
+Which method does best?
+
+Best method:
+
+-   Australia: Drift
+-   Canada: Drift
+-   Japan: Drift
+-   USA: Drift
+
+```{r ch05-ts-toolbox-106}
+
+# d.
+
+hh_fit |>
+  filter(Country == 'Australia') |>
+  select(Drift) |>
+  gg_tsresiduals()
+  
+# => Yes, the residuals from Drift method resemble white noise
+
+```
+
+```{r ch05-ts-toolbox-107}
+
+hh_fit |>
+  filter(Country == 'Japan') |>
+  select(Drift) |>
+  gg_tsresiduals()
+  
+# => Yes, the residuals from Drift method resemble white noise
+
+```
+
+```{r ch05-ts-toolbox-108}
+
+hh_fit |>
+  filter(Country == 'Canada') |>
+  select(Drift) |>
+  gg_tsresiduals()
+  
+# => Yes, the residuals from Drift method resemble white noise
+
+```
+
+```{r ch05-ts-toolbox-109}
+
+hh_fit |>
+  filter(Country == 'USA') |>
+  select(Drift) |>
+  gg_tsresiduals()
+  
+# => Yes, the residuals from Drift method resemble white noise
+
+```
+
+10. 
+
+```{r ch05-ts-toolbox-110}
+
+takeaway_food <- aus_retail |>
+  filter(Industry == 'Cafes, restaurants and takeaway food services') |>
+  select(-Industry)
+
+takeaway_food |>
+  autoplot(Turnover) +
+  facet_grid(vars(State)) +
+  theme(legend.position="none")
+
+# Best method assumptions:
+# Australian Capital Territory - Drift
+# New South Wales - Seasonal Naive
+# Northern Territory - Naive
+# Queensland - Seasonal Naive
+# South Australia - Drift
+# Tasmania - Naive
+# Victoria - Seasonal Naive
+# Western Australia - Seasonal Naive
+
+```
+
+```{r ch05-ts-toolbox-111}
+
+# a.
+
+takeaway_train <- takeaway_food |>
+  group_by(State) |>
+  slice(1:(n()-4*12))
+
+takeaway_train
+
+```
+
+```{r ch05-ts-toolbox-112}
+
+# check train-test splitting
+takeaway_train |>
+  # Train
+  autoplot(Turnover, color = 'black') +
+  # test
+  autolayer(anti_join(takeaway_food, takeaway_train), color = 'red') +
+  facet_grid(vars(State)) +
+  theme(legend.position = 'none')
+
+```
+
+```{r ch05-ts-toolbox-113}
+
+# b.
+
+# fit the mopdel on the training set
+
+takeaway_fit <- takeaway_train |>
+  model(
+    Mean = MEAN(Turnover),
+    Naive = NAIVE(Turnover),
+    `Seasonal Naive` = SNAIVE(Turnover),
+    Drift = RW(Turnover ~ drift()))
+
+takeaway_fc <- takeaway_fit |>
+  forecast(new_data = anti_join(takeaway_food, takeaway_train)) 
+
+takeaway_fc |>
+  autoplot(takeaway_food) +
+  facet_grid(rows=vars(.model), cols=vars(State)) +
+  theme(legend.position = 'none')
+
+```
+
+```{r ch05-ts-toolbox-114}
+
+# c.
+
+takeaway_fc |>
+  accuracy(takeaway_food) |>
+  ggplot(aes(x = .model, y = MAPE, fill = State)) +
+  geom_col() +
+  geom_text(aes(label=round(MAPE, 2)), position=position_dodge(width=0.9), vjust=-0.25) +
+  facet_grid(vars(State)) +
+  theme(legend.position = 'none')
+
+# Best method:
+# Australian Capital Territory - Drift
+# New South Wales - Naive
+# Northern Territory - Naive
+# Queensland - Seasonal Naive
+# South Australia - Drift
+# Tasmania - Naive
+# Victoria - Drift
+# Western Australia - Naive
+
+```
+
+```{r ch05-ts-toolbox-115}
+
+# d.
+
+# Australian Capital Territory - Drift
+takeaway_fit |>
+  filter(State == 'Australian Capital Territory') |>
+  select(Drift) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Drift method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+```{r ch05-ts-toolbox-116}
+
+# New South Wales - Naive
+
+takeaway_fit |>
+  filter(State == 'New South Wales') |>
+  select(Naive) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+```{r ch05-ts-toolbox-117}
+
+# Northern Territory - Naive
+
+takeaway_fit |>
+  filter(State == 'Northern Territory') |>
+  select(Naive) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+
+```
+
+```{r ch05-ts-toolbox-118}
+
+# Queensland - Seasonal Naive
+
+takeaway_fit |>
+  filter(State == 'Queensland') |>
+  select(`Seasonal Naive`) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+```{r ch05-ts-toolbox-119}
+
+# South Australia - Drift
+
+takeaway_fit |>
+  filter(State == 'South Australia') |>
+  select(Drift) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+```{r ch05-ts-toolbox-120}
+
+# Tasmania - Naive
+
+takeaway_fit |>
+  filter(State == 'Tasmania') |>
+  select(Naive) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+```{r ch05-ts-toolbox-121}
+
+# Victoria - Drift
+
+takeaway_fit |>
+  filter(State == 'Victoria') |>
+  select(Drift) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+
+```
+
+```{r ch05-ts-toolbox-122}
+
+# Western Australia - Naive
+
+takeaway_fit |>
+  filter(State == 'Western Australia') |>
+  select(Naive) |>
+  gg_tsresiduals()
+
+# => No, the residuals from Naive method do not resemble white noise, there are autocorrelation in the residuals and non constant variance of the residuals
+
+```
+
+11. 
+
+```{r ch05-ts-toolbox-123}
+
+# a.
+
+decomp <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  model(STL(Bricks ~ trend(window=5) + season(window='periodic'), robust = TRUE))
+
+decomp |>
+  components() |>
+  autoplot()
+
+```
+
+```{r ch05-ts-toolbox-124}
+
+# b.
+
+decomp |>
+  components() |>
+  select(-.model) |>
+  autoplot(season_adjust) +
+  labs(title = 'Seasonal adjusted data of bricks production')
+
+```
+
+```{r ch05-ts-toolbox-125}
+
+# c.
+
+decomp |>
+  components() |>
+  select(-.model) |>
+  model(NAIVE(season_adjust)) |>
+  forecast(h = 8) |>
+  autoplot(decomp |>
+              components() |>
+              select(-.model) )
+
+```
+
+```{r ch05-ts-toolbox-126}
+
+# d.
+
+
+fit_dcmp <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  model(stlf = decomposition_model(
+    STL(Bricks ~ trend(window = 7)),
+    NAIVE(season_adjust)
+  ))
+fit_dcmp |>
+  forecast() |>
+  autoplot(aus_production)+
+  labs(y = "Million bricks",
+       title = "Australian bricks production forecasts")
+
+```
+
+```{r ch05-ts-toolbox-127}
+
+# e. 
+
+fit_dcmp |> gg_tsresiduals()
+
+
+```
+
+```{r ch05-ts-toolbox-128}
+
+# f.
+fit_dcmp <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  model(stlf = decomposition_model(
+    STL(Bricks ~ trend(window = 7), robust = TRUE),
+    NAIVE(season_adjust)
+  ))
+fit_dcmp |>
+  forecast() |>
+  autoplot(aus_production)+
+  labs(y = "Million bricks",
+       title = "Australian bricks production forecasts")
+
+```
+
+```{r ch05-ts-toolbox-129}
+
+fit_dcmp |> gg_tsresiduals()
+
+```
+
+Forecasting with the robust STL decomposition decreases autocorrelation of the residuals.
+
+```{r ch05-ts-toolbox-130}
+
+# g. Compare forecasts from decomposition_model() with those from SNAIVE(), using a test set comprising the last 2 years of data. Which is better?
+
+bricks <- aus_production |>
+  filter(!is.na(Bricks)) |>
+  select(Bricks) |>
+  update_tsibble(index = Quarter, regular = TRUE)
+
+# training set
+brick_train <- bricks |> slice(1:(nrow(bricks)-8))
+# test set
+brick_test <- bricks |> anti_join(brick_train, by='Quarter')
+
+brick_train |>
+  autoplot(Bricks) +
+  autolayer(brick_test, Bricks, color = 'red')
+
+# fit decomposition model on training set
+decomp_fit <- brick_train |>
+              model(stlf = decomposition_model(
+                STL(Bricks ~ trend(window = 5), robust = TRUE),
+                NAIVE(season_adjust)
+              ))
+
+# forecast decomp model on test set
+decomp_fc <- decomp_fit |>
+  forecast(new_data = brick_test)
+
+decomp_fc |>
+  autoplot(bricks) +
+  labs(y = "Million bricks",
+       title = "Australian bricks production", 
+       subtitle = 'Decomposition forecasts')
+
+```
+
+```{r ch05-ts-toolbox-131}
+
+# fit seasonal naive model on training set
+snaive_fit <- brick_train |>
+        model(SNAIVE(Bricks))
+# forecast snaive on test set
+snaive_fc <- snaive_fit |>
+  forecast(new_data = brick_test)
+
+snaive_fc |>
+  autoplot(bricks)+
+  labs(y = "Million bricks",
+       title = "Australian bricks production", 
+       subtitle = 'Seasonal Naive forecasts')
+
+```
+
+```{r ch05-ts-toolbox-132}
+
+# Compering decomp and snaive forecasts
+bind_rows(decomp_fc |> accuracy(bricks),
+          snaive_fc |> accuracy(bricks))
+
+
+```
+
+The forecasts from decomposition model are better than from seasonal naive model.
+
+12. 
+
+```{r ch05-ts-toolbox-133}
+
+# a.
+
+gc_tourism <- tourism |>
+                filter(Region == 'Gold Coast') |>
+                summarise(Trips = sum(Trips))
+
+gc_tourism |>
+  autoplot(Trips) +
+  labs(y = 'Thousands', title = 'Quarterly visitor nights in Gold Coast, Australia')
+
+```
+
+```{r ch05-ts-toolbox-134}
+
+# b.
+
+gc_train_1 <- gc_tourism |> slice(1:(n()-4))
+gc_train_2 <- gc_tourism |> slice(1:(n()-8))
+gc_train_3 <- gc_tourism |> slice(1:(n()-12))
+
+```
+
+```{r ch05-ts-toolbox-135}
+
+examine_splitting_tourism <- function(full, train, name){
+  print(full |>
+          autoplot(Trips) +
+          autolayer(full |> anti_join(train, by=c('Quarter')), Trips, color = 'red') +
+          labs(title=name)
+        )
+}
+
+examine_splitting_tourism(gc_tourism, gc_train_1, 'Training set 1')
+
+```
+
+```{r ch05-ts-toolbox-136}
+
+examine_splitting_tourism(gc_tourism, gc_train_2, 'Training set 2')
+
+```
+
+```{r ch05-ts-toolbox-137}
+
+examine_splitting_tourism(gc_tourism, gc_train_3, 'Training set 3')
+
+```
+
+```{r ch05-ts-toolbox-138}
+
+# c.
+
+gc_fit_1 <- gc_train_1 |>
+  model(snaive1 = SNAIVE(Trips))
+gc_fit_2 <- gc_train_2 |>
+  model(snaive2 = SNAIVE(Trips))
+gc_fit_3 <- gc_train_3 |>
+  model(snaive3 = SNAIVE(Trips))
+
+gc_fc_1 <- gc_fit_1 |> forecast(h = '1 year')
+gc_fc_2 <- gc_fit_2 |> forecast(h = '1 year')
+gc_fc_3 <- gc_fit_3 |> forecast(h = '1 year')
+
+```
+
+```{r ch05-ts-toolbox-139}
+
+# d.
+
+bind_rows(gc_fc_1 |> 
+              accuracy(anti_join(gc_tourism, gc_train_1, by = 'Quarter')),
+          gc_fc_2 |> 
+              accuracy(anti_join(gc_tourism, gc_train_2, by = 'Quarter')),
+          gc_fc_3 |> 
+              accuracy(anti_join(gc_tourism, gc_train_3, by = 'Quarter')))$MAPE
+
+```
+
+

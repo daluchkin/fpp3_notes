@@ -1,0 +1,1210 @@
+# Time series graphics
+
+[The source of the chapter](https://otexts.com/fpp3/graphics.html)
+
+The first step in data analysis is to plot the data. Graphs help visualize patterns, outliers, trends, and relationships. These insights guide the choice of forecasting methods and appropriate graphs, depending on the data type.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r ch02-ts-plots-1}
+# loading libraries
+library(tsibble)
+library(tsibbledata)
+library(tidyverse)
+# to read data
+library(rio)
+library(ggplot2)
+library(fabletools)
+library(feasts)
+library(fpp3)
+
+```
+
+## `tsibble` object
+
+[The source of the section](https://otexts.com/fpp3/tsibbles.html)
+
+### The index variable
+
+```{r ch02-ts-plots-2, echo=TRUE}
+
+y <- tsibble(Year = 2015:2019,
+             Observations = c(123, 39, 78, 52, 110),
+             index = Year)
+
+y
+
+```
+
+```{r ch02-ts-plots-3}
+
+# the structure of the tsibble
+str(y)
+
+```
+
+Convert from data frame (or tibble) to tsibble.
+
+```{r ch02-ts-plots-4}
+
+df <- data.frame(Month = as.character(make_yearmonth(year = 2024, month = 1:5)),
+                 Observation = c(123, 45, 32, 54, 22))
+df                 
+
+```
+
+```{r ch02-ts-plots-5}
+
+df |>
+  mutate(Month = yearmonth(Month)) |>
+  as_tsibble(index = Month)
+```
+
+> **[1M]** indicates a monthly data.
+
+To convert `tsibble` to old `ts` format:
+
+```{r ch02-ts-plots-6}
+
+df2 <- df |> as.ts()
+
+df2
+
+```
+
+To convert from `ts` to `tsibble`:
+
+```{r ch02-ts-plots-7}
+
+AirPassengers
+
+```
+
+```{r ch02-ts-plots-8}
+
+AirPassengers |>
+  as_tsibble() |> # creates index column fot time point
+  rename(month = index)
+
+```
+
+### The key variable
+
+Multiple time series in a single object.
+
+```{r ch02-ts-plots-9}
+
+olympic_running
+
+```
+
+**[4K]** indicates that the interval if these observations is every four years. **[14]** indicates there are 14 separaste time series in the `stibble` object.
+
+```{r ch02-ts-plots-10}
+
+key(olympic_running)
+
+```
+
+```{r ch02-ts-plots-11}
+
+print(olympic_running |> distinct(Sex))
+print(olympic_running |> distinct(Length))
+print(olympic_running |> distinct(Sex, Length))
+
+```
+
+```{r ch02-ts-plots-12}
+
+key_vars(olympic_running)
+
+```
+
+### Working with `tsibble` object
+
+`dplyr` functions such as `mutate()`, `filter()`, `select()` and `summarise()` work with `tsibble` objects.
+
+```{r ch02-ts-plots-13}
+
+PBS
+
+```
+
+```{r ch02-ts-plots-14}
+
+PBS |>
+  filter(ATC2 == 'A10')
+
+```
+
+```{r ch02-ts-plots-15}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Month, Concession, Type, Cost)
+
+```
+
+```{r ch02-ts-plots-16}
+
+print(index_var(PBS))
+print(key_vars(PBS))
+
+```
+
+If no one index or key were not explicitly selected, they would be returned as they are required for `tsibble` to ensure each row contains a unique combination of keys and index.
+
+```{r ch02-ts-plots-17}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Cost)
+
+```
+
+```{r ch02-ts-plots-18}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Concession, Type, Cost)
+
+```
+
+```{r ch02-ts-plots-19}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Month, Concession, Type, Cost) |>
+  summarise(TotalC = sum(Cost))
+
+```
+
+```{r ch02-ts-plots-20}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Month, Concession, Type, Cost) |>
+  summarise(TotalC = sum(Cost)) |>
+  mutate(Cost = TotalC / 1e6)
+
+```
+
+Save to the further usage.
+
+```{r ch02-ts-plots-21}
+
+PBS |>
+  filter(ATC2 == 'A10') |>
+  select(Month, Concession, Type, Cost) |>
+  summarise(TotalC = sum(Cost)) |>
+  mutate(Cost = TotalC / 1e6) -> a10
+
+a10
+
+```
+
+### Read a csv file and convert to a tsibble
+
+```{r ch02-ts-plots-22}
+
+prison <- import('https://OTexts.com/fpp3/extrafiles/prison_population.csv')
+
+prison <- prison |>
+  mutate(Quarter = yearquarter(Date)) |>
+  select(-Date) |>
+  as_tsibble(key = c(State, Gender, Legal, Indigenous))
+
+prison
+
+```
+
+> For a tsibble to be valid, it requires a unique index for each combination of keys. The `tsibble()` or `as_tsibble()` function will return an error if this is not true.
+
+### The seasonal period
+
+> The seasonal period is the number of observations before the seasonal pattern repeats.
+
+| Data     | Minute | Hour |   Day |   Week |     Year |
+|:---------|-------:|-----:|------:|-------:|---------:|
+| Quarters |        |      |       |        |        4 |
+| Months   |        |      |       |        |       12 |
+| Weeks    |        |      |       |        |    52.18 |
+| Days     |        |      |       |      7 |   365.25 |
+| Hours    |        |      |    24 |    168 |     8766 |
+| Minutes  |        |   60 |  1440 |  10080 |   525960 |
+| Seconds  |     60 | 3600 | 86400 | 604800 | 31557600 |
+
+## Time plot
+
+[The source of the section](https://otexts.com/fpp3/time-plots.html)
+
+```{r ch02-ts-plots-23}
+
+a10
+
+```
+
+`autoplot()` is a smart function.
+
+> It automatically produces an appropriate plot of whatever you pass to it in the first argument
+
+```{r ch02-ts-plots-24}
+
+a10 |> 
+  autoplot(Cost) +
+  labs(y='$ (millions)', title = 'Australian antidiabetic drug sales')
+
+```
+
+Using `ggplot`.
+
+```{r ch02-ts-plots-25}
+
+a10 |>
+  ggplot(aes(x = Month, y = Cost)) +
+    geom_line() +
+    ggtitle('Australian antidiabetic drug sales') +
+    ylab('$ (millions)')
+
+```
+
+Add points on the line.
+
+```{r ch02-ts-plots-26}
+
+a10 |> 
+  autoplot(Cost) +
+  geom_point() +
+  labs(y='$ (millions)', title = 'Australian antidiabetic drug sales')
+
+```
+
+```{r ch02-ts-plots-27}
+
+ansett
+
+```
+
+```{r ch02-ts-plots-28}
+
+ansett |>
+  autoplot(Passengers)
+
+```
+
+Distinct categories.
+
+```{r ch02-ts-plots-29}
+
+print(ansett |> distinct(Class))
+print(ansett |> distinct(Airports))
+
+```
+
+```{r ch02-ts-plots-30}
+
+ansett |>
+  filter(Class == 'Economy') |>
+  autoplot(Passengers) +
+  labs(y = 'Number of passanger', x = 'Week', title = 'Number of passangers by routs')
+
+```
+
+```{r ch02-ts-plots-31}
+
+ansett |>
+  filter(Airports == 'MEL-SYD') |>
+  select(-Airports) |> # to avoid the filtered rout from titles
+  autoplot(Passengers) +
+  labs(y = 'Number of passanger', x = 'Week', title = 'Number of passangers by class')
+
+```
+
+```{r ch02-ts-plots-32}
+
+melsyd_economy <- ansett |>
+  filter(Airports == 'MEL-SYD', Class == 'Economy') |>
+  mutate(Passengers = Passengers/1e3)
+
+melsyd_economy |>
+  autoplot(Passengers) +
+  labs(title = 'Ansett airlines economy class',
+       subtitle = 'Melbourne-Sydney',
+       y = 'Passangers (K)', x = 'Week')
+
+```
+
+```{r ch02-ts-plots-33}
+
+
+
+```
+
+## Time series patterns
+
+[The source of the section](https://otexts.com/fpp3/tspatterns.html)
+
+-   **Trend**: pattern exists when there is a long-term increase or decrease in the data.
+-   **Seasonal**: pattern exists when a series is influenced by seasonal factor (quarter, month, week, day of the week, etc.).
+-   **Cyclic**: pattern exists when data exhibit rises and falls that are not of fixed period.
+
+```{r ch02-ts-plots-34}
+
+# positive trend
+aus_production |>
+  filter(year(Quarter) >= 1980) |>
+  autoplot(Electricity) +
+  labs(y = 'GWh', title = 'Australian electricity production')
+
+```
+
+> **Important!** Many time series include trend, cycles and seasonality. When choosing a forecasting method, we will first need to identify the time series patterns in the data, and then choose a method that is able to capture the patterns properly.
+
+```{r ch02-ts-plots-35}
+
+aus_production |>
+  autoplot(Bricks) +
+  labs(y = 'MIllion units', title = 'Australian clay brick production')
+
+```
+
+> The timing of peaks and troughs is predictable with seasonal data, but unpredictable in the long term with ciclic data.
+
+## Seasonal plots
+
+[The source of the section](https://otexts.com/fpp3/seasonal-plots.html)
+
+```{r ch02-ts-plots-36}
+
+a10 |> 
+  autoplot(Cost)
+
+```
+
+A seasonal plot plots the data against the individual season in which the data were observed.
+
+```{r ch02-ts-plots-37}
+
+a10 |>
+  gg_season(Cost, labels = 'both') +
+  labs(y = '$ million', title = 'Seasonal plot: antidiabetic drug sales')
+
+```
+
+```{r ch02-ts-plots-38}
+
+beer <- aus_production |>
+  select(Quarter, Beer) |>
+  filter(year(Quarter) >= 1992)
+
+beer |> autoplot(Beer) +
+  geom_point() +
+  labs(title = 'Australian beer production', y = 'Megalitres')
+
+```
+
+### Multiple seasonal periods
+
+```{r ch02-ts-plots-39}
+
+vic_elec |> autoplot()
+
+```
+
+```{r ch02-ts-plots-40}
+
+
+vic_elec |>
+  gg_season(Demand)
+
+```
+
+By time during the day.
+
+```{r ch02-ts-plots-41}
+
+vic_elec |>
+  gg_season(Demand, period = 'day') +
+  theme(legend.position = "none") +
+  labs(y="MWh", title="Electricity demand: Victoria")
+
+```
+
+Weekly.
+
+```{r ch02-ts-plots-42}
+
+vic_elec |>
+  gg_season(Demand, period = 'week') +
+  theme(legend.position = "none") +
+  labs(y="MWh", title="Electricity demand: Victoria")
+
+```
+
+Monthly.
+
+```{r ch02-ts-plots-43}
+
+vic_elec |>
+  gg_season(Demand, period = 'month') +
+  theme(legend.position = "none") +
+  labs(y="MWh", title="Electricity demand: Victoria")
+
+```
+
+## Seasonal subseries plots
+
+[The source of the section](https://otexts.com/fpp3/subseries.html)
+
+Mini plots per each season.
+
+```{r ch02-ts-plots-44}
+
+a10 |>
+  gg_subseries(Cost) +
+  labs(y = '$ (millions)',
+       title = 'Australian antidiabetic drug sales')
+
+```
+
+> This plot is useful to identify changing within particular seasons.
+
+### Example: Australian holiday tourism
+
+```{r ch02-ts-plots-45}
+
+holidays <- tourism |>
+  filter(Purpose == 'Holiday') |>
+  group_by(State) |>
+  summarise(Trips = sum(Trips))
+
+holidays
+
+```
+
+Time plots of each series show that there is strong seasonality for most states, but that the seasonal peaks do not coincide.
+
+```{r ch02-ts-plots-46}
+
+holidays |>
+  autoplot(Trips) +
+  labs(y = 'Obernight trips (K)',
+       title = 'Australian domestic holidays')
+
+```
+
+```{r ch02-ts-plots-47, fig.height=10, fig.width=8}
+
+holidays |>
+  gg_season(Trips) +
+  labs(y = 'Obernight trips (K)',
+       title = 'Australian domestic holidays')
+
+```
+
+Subseries plot.
+
+```{r ch02-ts-plots-48, fig.height=10, fig.width=8}
+
+holidays |>
+  gg_subseries(Trips) +
+    labs(y = 'Obernight trips (K)',
+       title = 'Australian domestic holidays')
+
+```
+
+## Scatterplots
+
+[The source of the section](https://otexts.com/fpp3/scatterplots.html)
+
+Scatterplots are useful to explore relationship between time series.
+
+```{r ch02-ts-plots-49}
+
+vic_elec_day_type = vic_elec |>
+  filter(year(Time) == 2014) |>
+  mutate(Day_Type =  case_when(Holiday ~ "Holiday",
+                               wday(Date) %in% 2:6 ~ "Weekday",
+                               TRUE ~ "Weekend"))
+
+vic_elec_day_type
+
+```
+
+```{r ch02-ts-plots-50}
+
+vic_elec_day_type |>
+  autoplot(facets=TRUE) +
+  labs(y = "GWh",
+       title = "Half-hourly electricity demand: Victoria")
+
+```
+
+```{r ch02-ts-plots-51}
+
+vic_elec_day_type |>
+  autoplot(Temperature) +
+  labs(y = "Degrees Celsius",
+    title = "Half-hourly temperatures: Melbourne, Australia")
+```
+
+The relationship between demand and temperature.
+
+```{r ch02-ts-plots-52}
+
+vic_elec_day_type |>
+  ggplot(aes(x = Temperature, y = Demand)) +
+  geom_point() +
+  labs(x = 'Temperature (Cº)',
+       title = 'Electricity demand (GWh')
+
+```
+
+By the type of a day.
+
+```{r ch02-ts-plots-53}
+
+vic_elec_day_type |>
+  ggplot(aes(x = Temperature, y = Demand, colour = Day_Type)) +
+  geom_point() +
+  labs(x = 'Temperature (Cº)',
+       title = 'Electricity demand (GWh)')
+
+```
+
+### Correlation
+
+The correlation coefficient.
+
+$$
+r = \frac {\sum{(x_t - \bar{x})(y_t - \bar{y})}}{\sqrt{\sum(x_t - \bar{x})^2}\sqrt{\sum(y_t - \bar{y})^2}}, -1 \leq r \leq 1
+$$
+
+### Scatterplot matrices
+
+```{r ch02-ts-plots-54}
+
+tourism
+
+```
+
+```{r ch02-ts-plots-55}
+
+visitors <- tourism |>
+  group_by(State) |>
+  summarise(Trips = sum(Trips))
+
+visitors
+
+```
+
+```{r ch02-ts-plots-56, fig.height=10, fig.width=8}
+
+visitors |>
+  ggplot(aes(x = Quarter, y = Trips)) +
+  geom_line() +
+  facet_grid(vars(State), scales = 'free_y') +
+  labs(title = 'Australian domestic tourism',
+       y = 'Overnight trips (K)')
+
+```
+
+A scatterplot matrix displays the relationships between pairs of variables in a dataset by showing scatterplots for each combination of variables. This helps to visualize correlations, trends, and patterns between variables, making it easier to detect linear relationships, clusters, or outliers. Each scatterplot shows how one variable relates to another, and the diagonal typically contains the distribution (e.g., histograms, density) of each variable.
+
+```{r ch02-ts-plots-57, message=FALSE, warning=FALSE, fig.height=10, fig.width=8}
+
+visitors |>
+  pivot_wider(values_from = 'Trips', names_from = 'State') |>
+  GGally::ggpairs(columns = 2:9)
+
+```
+
+## Lag plots
+
+[The source of the section](https://otexts.com/fpp3/lag-plots.html)
+
+Lag plot uses to identify relationship between multiple time series.
+
+```{r ch02-ts-plots-58}
+
+new_production <- aus_production |>
+  filter(year(Quarter) >= 1992)
+
+new_production
+
+```
+
+```{r ch02-ts-plots-59}
+
+new_production |>
+  autoplot(Beer) +
+  geom_point()
+
+```
+
+> Each graph shows $y_t$ plotted against $y_{t−k}$ for different values of $k$.
+
+```{r ch02-ts-plots-60,  fig.height=10, fig.width=8}
+
+new_production |>
+  gg_lag(Beer, geom='point') +
+  labs(x = 'lag(Beer, k)')
+
+```
+
+The relationship is strongly positive at lags 4 and 8, reflecting the strong seasonality in the data. The negative relationship seen for lags 2 and 6 occurs because peaks (in Q4) are plotted against troughs (in Q2)
+
+```{r ch02-ts-plots-61,  fig.height=10, fig.width=8}
+
+new_production |>
+  gg_lag(Beer, geom='path') +
+  labs(x = 'lag(Beer, k)')
+
+```
+
+## Autocorrelation
+
+[The source of the section](https://otexts.com/fpp3/acf.html)
+
+Autocorrelation measures the linear relationship between lagged values of a time series.
+
+For example, $r_1$ measures the relationship between $y_t$ and $y_{t−1}$, $r_2$ measures the relationship between $y_t$ and \$y_{t−2}, and so on.
+
+$$
+ACF_1 = r_1 = Corr(y_t, y_{t-1}) \\
+ACF_2 = r_2 = Corr(y_t, y_{t-2}) \\
+... \\
+ACF_k = r_k = Corr(y_t, y_{t-k}) 
+$$
+
+The value of $r_k$ can be written as
+
+$$
+
+r_k = \frac {\sum_{t=k+1}^T (y_t - \bar{y})(y_{t-k} - \bar{y})} {\sum_{t=1}^T (y_t - \bar{y})^2}
+
+$$
+
+where $T$ is the length of the time series. The autocorrelation coefficients make up the autocorrelation function or ACF.
+
+```{r ch02-ts-plots-62}
+
+new_production |>
+  ACF(Beer, lag_max = 9)
+
+```
+
+Build correlogram.
+
+```{r ch02-ts-plots-63}
+
+new_production |>
+  ACF(Beer) |>
+  autoplot() + labs(title="Australian beer production")
+
+```
+
+Interpretaion: 
+
++   $r_4$ is higher than for the other lags. This is due to the seasonal pattern in the data: the peaks tend to be four quarters apart and the troughs tend to be four quarters apart.
++   $r_2$ is more negative than for the other lags because troughs tend to be two quarters behind peaks.
++   The dashed blue lines indicate whether the correlations are significantly different from zero.
+
+### Trend and seasonality in ACF plots
+
+**Trend:** Indicated by a slow decay in autocorrelations over increasing lags, suggesting a persistent pattern. ACF values decrease gradually without sharp drops.
+
+**Seasonality:** Shown by regular spikes at consistent intervals (lags), reflecting repeating cycles. For example, monthly data with yearly seasonality will spike at lag 12, 24, etc.
+
+> When data are both trended and seasonal, you see a combination of these effects.
+
+```{r ch02-ts-plots-64}
+
+a10 |>
+  ACF(Cost, lag_max = 48) |>
+  autoplot() +
+  labs(title = 'Australian antidiabetic drug sales')
+
+```
+
+```{r ch02-ts-plots-65}
+
+retail <- us_employment |>
+  filter(Title == 'Retail Trade', year(Month) >= 1980) 
+
+retail |>
+  autoplot(Employed)
+
+```
+
+```{r ch02-ts-plots-66}
+
+retail |>
+  ACF(Employed, lag_max = 48) |>
+  autoplot()
+
+```
+
+```{r ch02-ts-plots-67}
+
+google_2015 <- gafa_stock |>
+  filter(Symbol == 'GOOG', year(Date) == 2015) |>
+  select(Date, Close)
+
+google_2015
+
+```
+
+```{r ch02-ts-plots-68}
+
+google_2015 |>
+  autoplot(Close)
+
+```
+
+```{r ch02-ts-plots-69}
+
+google_2015 |>
+  ACF(Close, lag_max = 100) |>
+  autoplot()
+
+```
+
+## White moise
+
+[The source of the section](https://otexts.com/fpp3/wn.html)
+
+> Time series that show no autocorrelation are called white noise.
+
+```{r ch02-ts-plots-70}
+
+set.seed(30)
+y <- tsibble(sample = 1:50,
+             wn = rnorm(50),
+             index = sample)
+
+y |> 
+  autoplot(wn) +
+  labs(title = 'White noise', y = '')
+
+```
+
+```{r ch02-ts-plots-71}
+
+y |>
+  ACF(wn) |>
+  autoplot() +
+  labs(title = 'White noise')
+
+```
+
+> For white noise series, we expect each autocorrelation to be close to zero. For a white noise series, we expect 95% of the spikes in the ACF to lie within $\pm 1.96/\sqrt{T}$, where $T$ is the length of the time series.
+
+>  If one or more large spikes are outside these bounds, or if substantially more than 5% of spikes are outside these bounds, then the series is probably not white noise.
+
+## Excercises
+
+1.
+
+-   `Bricks` from `aus_production`
+
+```{r ch02-ts-plots-72, message=FALSE, warning=FALSE}
+
+?aus_production
+# Quarterly estimates of selected indicators of manufacturing production in Australia.
+# Bricks:	Clay brick production in millions of bricks.
+
+aus_production
+# What is the time interval: Quarter
+
+aus_production |>
+  autoplot(Bricks) +
+  labs(y = 'Bricks (million)', title = 'Quarterly production of bricks (million) in Australia')
+
+```
+
+-   `Lynx` from `pelt`
+
+```{r ch02-ts-plots-73, message=FALSE, warning=FALSE}
+
+?pelt
+# Hudson Bay Company trading records for Snowshoe Hare and Canadian Lynx furs from 1845 to 1935. This data contains trade records for all areas of the company.
+# Lynx:	The number of Canadian Lynx pelts traded.
+
+pelt
+# What is the time interval: Year
+
+pelt |>
+  autoplot(Lynx) +
+  labs(y = 'Number of Lynx', title = 'Annual trading of Lynx')
+
+```
+
+-   `Close` from `gafa_stock`
+
+```{r ch02-ts-plots-74, message=FALSE, warning=FALSE}
+
+?gafa_stock
+# Historical stock prices from 2014-2018 for Google, Amazon, Facebook and Apple. All prices are in $USD.
+# Close:	The closing price for the stock.
+
+gafa_stock
+# What is the time interval: Trading days
+
+gafa_stock |>
+  autoplot(Close) +
+  facet_grid(vars(Symbol), scale = 'free_y') +
+  labs(y = '$USD', title = 'Historical stock prices from 2014-2018',
+       subtitle = 'Google, Amazon, Facebook and Apple')
+
+```
+
+-   `Demand` from `vic_elec`
+
+```{r ch02-ts-plots-75, message=FALSE, warning=FALSE}
+
+?vic_elec
+# vic_elec is a half-hourly tsibble with three values:
+# Demand:	Total electricity demand in MWh.
+
+vic_elec
+# What is the time interval: 30 m
+
+vic_elec |>
+  autoplot(Demand) +
+  labs(y = 'Demand (MWh)', title = 'Total electricity demand')
+
+```
+
+
+2. 
+
+```{r ch02-ts-plots-76}
+
+peak_stock <- gafa_stock |>
+  group_by(Symbol) |>
+  filter(Close == max(Close)) |>
+  select(Close) |>
+  ungroup()
+peak_stock
+
+```
+
+
+```{r ch02-ts-plots-77}
+
+gafa_stock |>
+  autoplot(Close) + 
+  geom_vline(data=peak_stock, mapping=aes(xintercept=Date), color = 'red') +
+  geom_point(data=peak_stock, mapping=aes(x=Date, y=Close), color = 'red') +
+  facet_grid(vars(Symbol), scale = 'free_y') +
+  labs(y = '$USD', title = 'Historical stock prices from 2014-2018',
+       subtitle = 'Google, Amazon, Facebook and Apple')
+
+```
+
+3.
+
+```{r ch02-ts-plots-78}
+
+# a.
+tute <- import('https://bit.ly/fpptute1')
+tute
+str(tute)
+# b.
+tute |>
+   mutate(Quarter = yearquarter(Quarter)) |>
+  as_tsibble(index = Quarter)
+# c.
+
+tute |>
+   mutate(Quarter = yearquarter(Quarter)) |>
+   as_tsibble(index = Quarter) |>
+   pivot_longer(-Quarter) |>
+   ggplot(aes(x = Quarter, y = value, color = name)) +
+      geom_line()
+
+tute |>
+   mutate(Quarter = yearquarter(Quarter)) |>
+   as_tsibble(index = Quarter) |>
+   pivot_longer(-Quarter) |>
+   autoplot()
+
+# split time series into different plots
+tute |>
+   mutate(Quarter = yearquarter(Quarter)) |>
+   as_tsibble(index = Quarter) |>
+   pivot_longer(-Quarter) |>
+   ggplot(aes(x = Quarter, y = value, color = name)) +
+      geom_line() +
+   facet_grid(name ~ ., scales = "free_y")
+
+```
+
+4. 
+
+```{r ch02-ts-plots-79}
+# a.
+
+# load library
+library(USgas)
+
+?us_total
+
+# b.
+us_total |>
+  as_tsibble(index = year, key = c(state))
+
+# c.
+us_total |>
+  as_tsibble(index = year, key = c(state)) |>
+  filter(state %in% c('Maine', 'Vermont', 'New Hampshire', 
+                      'Massachusetts', 'Connecticut', 'Rhode Island')) |>
+  autoplot() +
+  labs(y = 'Volume (Million Cubic Feet)',
+       title = 'Annual natural gas consumption',
+       subtitle = 'New England area')
+
+```
+
+5. 
+
+```{r ch02-ts-plots-80}
+
+# a.
+tourism.5 <- import('https://bit.ly/fpptourism')
+
+# b.
+
+# tourism form tsibble package
+tourism
+# index = Quarter, keys = [Region, State, Purpose]
+
+ts_tourims <- tourism.5 |>
+  mutate(Quarter = yearquarter(Quarter)) |>
+  as_tsibble(index = Quarter,
+             key = c('Region', 'State', 'Purpose'))
+
+ts_tourims
+
+# c.
+ts_tourims |> distinct(Region)
+ts_tourims |> distinct(Purpose)
+
+ts_tourims |>
+  group_by(Region, Purpose) |>
+  summarise(Trips = mean(Trips)) |>
+  arrange(desc(Trips)) |>
+  slice(1)
+
+#d.
+ts_tourims |>
+  group_by(State) |>
+  summarise(total_trips = sum(Trips)) |>
+  as_tsibble(index = Quarter, key = c(State))
+
+```
+
+6.
+
+```{r ch02-ts-plots-81, fig.height=10, fig.width=8}
+
+?aus_arrivals
+aus_arrivals
+
+# autoplot()
+aus_arrivals |>
+  autoplot(Arrivals) +
+  facet_grid(vars(Origin), scales = 'free_y') +
+  labs(title = 'Quarterly international arrivals to Australia')
+
+# gg_season()
+aus_arrivals |>
+  gg_season(Arrivals, labels = 'both') +
+  facet_grid(vars(Origin), scales = 'free_y') +
+  labs(title = 'Seasonal international arrivals to Australia')
+
+# gg_subseries()
+aus_arrivals |>
+  gg_subseries(Arrivals) +
+  labs(title = 'Quarterly international arrivals to Australia')
+
+```
+
+
+7.
+
+```{r ch02-ts-plots-82, fig.height=8}
+
+?aus_retail
+aus_retail
+
+myseries <- aus_retail |>
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+
+myseries
+
+myseries |>
+  autoplot()
+
+myseries |>
+  gg_season(labels = 'both')
+
+myseries |>
+  gg_subseries()
+
+myseries |>
+  gg_lag(geom = 'point')
+
+myseries |>
+  gg_tsdisplay()
+
+```
+
+8.
+
+```{r ch02-ts-plots-83}
+
+# “Total Private” Employed from us_employment
+total_private <- us_employment |>
+  filter(Title == 'Total Private')
+
+total_private |> autoplot(Employed)
+total_private |> gg_season(Employed)
+total_private |> gg_subseries(Employed)
+total_private |> gg_lag(Employed)
+total_private |> ACF(Employed) |> autoplot()
+
+```
+
+```{r ch02-ts-plots-84}
+
+# Bricks from aus_production
+aus_production |> autoplot(Bricks)
+aus_production |> gg_season(Bricks, labels = 'both')
+aus_production |> gg_subseries(Bricks)
+aus_production |> gg_lag(Bricks)
+aus_production |> ACF(Bricks) |> autoplot()
+
+```
+
+```{r ch02-ts-plots-85}
+
+# Hare from pelt
+pelt |> autoplot(Hare)
+#pelt |> gg_season(Hare, labels = "both")
+pelt |> gg_subseries(Hare)
+pelt |> gg_lag(Hare)
+pelt |> ACF(Hare) |> autoplot()
+
+```
+
+```{r ch02-ts-plots-86}
+
+# “H02” Cost from PBS
+
+h02 <- PBS |>
+  filter(ATC2 == 'H02') |>
+  select(Cost) |>
+  as_tsibble(index = Month, key = c("Concession", "Type", "ATC1", "ATC2"))
+  
+h02 |> autoplot(Cost) +
+  facet_grid(Concession ~ Type) +
+  theme(legend.position="none")
+  
+h02 |> gg_season(Cost, labels = 'both') +
+  facet_grid(Concession ~ Type)
+
+h02 |> gg_subseries(Cost) +
+  facet_grid(Concession ~ Type)
+
+# h02 |> gg_lag(Cost) +
+#   facet_grid(Concession ~ Type)
+
+h02 |> ACF(Cost) |> autoplot()
+
+```
+
+```{r ch02-ts-plots-87}
+
+# Barrels from us_gasoline
+us_gasoline |> autoplot(Barrels)
+us_gasoline |> gg_season(Barrels, labels = 'both')
+us_gasoline |> gg_subseries(Barrels)
+us_gasoline |> gg_lag(Barrels)
+us_gasoline |> ACF(Barrels) |> autoplot()
+
+```
+
+9.
+
+![alt text](https://otexts.com/fpp3/fpp_files/figure-html/acfguess-1.png)
+Source: [#9 in 2.10 Exercises section](https://otexts.com/fpp3/graphics-exercises.html)
+
+```{r ch02-ts-plots-88}
+
+# 1 - B
+# 2 - A
+# 3 - D
+# 4 - C
+
+library(fma)
+# 1
+cowtemp |> autoplot()
+cowtemp |> ggAcf()
+
+# 2
+usdeaths |> autoplot()
+usdeaths |> ggAcf()
+
+# 3
+AirPassengers |> autoplot()
+AirPassengers |> ggAcf()
+
+# 4
+lynx |> autoplot()
+lynx |> ggAcf()
+
+```
+
+
+10.
+
+```{r ch02-ts-plots-89}
+
+aus_livestock
+
+aus_livestock |> distinct(State)
+
+pigs <- aus_livestock |>
+  filter(year(Month) %in% 1990:1995, State == 'Victoria', Animal == 'Pigs')
+
+pigs |> autoplot()
+pigs |> ACF(Count, lag_max = 48) |> autoplot()
+
+```
+
+11. 
+
+```{r ch02-ts-plots-90}
+
+dgoog <- gafa_stock |>
+  filter(Symbol == "GOOG", year(Date) >= 2018) |>
+  mutate(trading_day = row_number()) |>
+  update_tsibble(index = trading_day, regular = TRUE) |>
+  mutate(diff = difference(Close))
+
+dgoog |> autoplot(Close)
+dgoog |> ACF(Close) |> autoplot()
+
+dgoog |> autoplot(diff)
+dgoog |> ACF(diff) |> autoplot()
+
+```
+
+
+
+
+
